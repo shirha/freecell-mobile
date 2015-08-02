@@ -1,0 +1,86 @@
+<html>
+	<head>
+        <meta charset="utf-8">
+	    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<title>Freecell Mobile</title>
+		<link rel="shortcut icon" type="image/png" href="i/favicon.ico">
+		<style type="text/css">
+			body
+			{
+				font-family:arial,verdana;
+				font-size:12px;
+				margin: 0px auto; 
+				background-image: url('i/texture0.jpg'); 
+			}
+			.container
+			{
+				float:left;
+				margin:0 auto;
+				width: 900px;
+			}
+			.icon	{
+				background-image: url('i/sheet.png'); 
+				background-repeat: no-repeat;
+				width:100px;
+				float:left;
+				height:100px;
+				position:absolute;
+			}
+			.img	{
+				background-repeat: no-repeat;
+				width:100px;
+				float:left;
+				height:150px;
+				position:absolute;
+			}
+			.bus	{
+				background-repeat: no-repeat;
+				width:100px;
+				float:left;
+				height:150px;
+				position:absolute;
+			}
+			.hint	{
+				width:98px; 
+				text-align: center;
+            			font-size: 225%; 
+		            	color: white; 
+		            	font-weight: bold;
+            			display: none;
+				top: 45px; 
+				left: 780px;						
+				float:left;
+				position:absolute;
+			}
+			.side	{
+				top: 10px; 
+				left: 890px;						
+				width:5px; 
+				position:absolute;
+			}
+			.freecell       {background-image: url('i/sheet.png'); }
+			.homecell       {background-image: url('i/sheet.png'); }
+			.cascades       {background-image: url('i/sheet.png'); }
+			.deck           {background-image: url('i/sheet.png'); }
+			.bus            {box-shadow: 0 0 25px 5px gray;}  
+			.hilite-disable {box-shadow: 0 0 50px 10px gray inset;}
+			.hilite-blue    {box-shadow: 0 0 25px 5px cornflowerblue inset;}
+			.hilite-yellow  {box-shadow: 0 0 25px 5px yellow inset;}
+			.hilite-red     {box-shadow: 0 0 25px 5px orangered inset;}
+			.hilite-green   {box-shadow: 0 0 25px 5px #005010 inset;}
+			.hilite-auto    {box-shadow: 0 0 25px 5px yellowgreen inset;}
+			.hilite-orange  {box-shadow: 0 0 25px 5px orange inset;}
+			.hilite-purple  {box-shadow: 0 0 25px 5px purple inset;}
+			.hilite-solved  {box-shadow: 0 0 25px 5px yellowgreen;}
+			.clear {clear:both;}
+		</style>
+	</head>
+	<body>
+		<div class="container">	</div>
+		<div class="info hint"></div><div class=side>&nbsp;</div>
+		<script src="js/jquery-1.10.2.min.js"></script>
+		<script src="js/velocity.min.js"></script>
+		<script src="js/velocity.ui.js"></script>
+		<script src="js/freecell-mobile.js" type="text/javascript"></script>
+	</body>
+</html>
