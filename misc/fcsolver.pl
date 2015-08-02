@@ -25,7 +25,7 @@ eof
 
   print "\nPlease enter gameno: "; my $parm = <STDIN>;
   my $heap = $parm =~ /--maxnodes/ ? "12g" : "4g"; #note 25000 only needs 4g
-  system("java -d64 -Xmx$heap -server -cp ../target/fcsolver-rs-0.1-SNAPSHOT.jar org.games.solitaire.Batch --gameno $parm") unless $parm == 0;
+  system("java -d64 -Xmx$heap -server -cp ../target/freecell-mobile-0.1-SNAPSHOT.jar org.games.solitaire.Batch --gameno $parm") unless $parm == 0;
 
   my $input;
   open( INPUT, "<", "upload.txt" ) or die "can't open input";

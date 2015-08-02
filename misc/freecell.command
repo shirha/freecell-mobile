@@ -11,7 +11,7 @@
 
 #
 # java -jar command requires the java SDK
-#  on your system, not just the jre
+#  on your system, the jre is not enough
 #
 
 java -jar freecell-mobile.jar

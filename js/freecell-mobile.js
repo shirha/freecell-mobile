@@ -65,10 +65,7 @@ function setupLayout(){
 function hint(){
   if(stack.isEof() || !isSolved){
     $('.hint').hide();
-    // $('.help').show();
-    // $('.game').text( '#' + game.gameno );
   } else {
-    // $('.help').hide();
     $('.hint').show();
     $('.hint').text( stack.move() );
   }
@@ -76,6 +73,8 @@ function hint(){
     stack.isEob() ? "10% 87.5%" : "10% 75%");
   $('.icon').eq(3).css("background-position", 
     stack.isEof() ? "15% 87.5%" : "15% 75%");
+
+  $('.icon').eq(7).attr('title', "#" + game.gameno + " - click for help");
 }
 
 var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, 
@@ -85,7 +84,6 @@ var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true
   setSolved = function (flag){
     (isSolved = arguments.length > 0 ? flag : isSolved) ?
       $('.icon').eq(6).css("background-position", "30% 100%") :
-//    !!window.location.href.match(/localhost|10.202.46.4/) ?
     xhrconnect ?
       $('.icon').eq(6).css("background-position", "30% 75%"  ) :
       $('.icon').eq(6).css("background-position", "30% 87.5%");
@@ -186,6 +184,7 @@ function layout(){
                fj, f0, fx, fy, card.deck)+
     '<div class="bus"  style="display: none"></div>';
       // create bus last for z-index !
+
   return $.extend(card, {layout: divstr}); // also deck:, gameno:
 }
 
@@ -448,7 +447,7 @@ function addEvents(){
     card.attr('id', new Card(card).toString()); // used by beginFactory
     $('.cascades').eq(n++ % 8).append(card);
   });
-  for (var i=0; i < 8; i++) $('.icon').eq(i).attr('title', tooltip[i]);
+  for (var i=0; i < 7; i++) $('.icon').eq(i).attr('title', tooltip[i]);
 
   $('.deck, .freecell, .homecell, .cascades').on('click', function(){
     var $this = $(this);
@@ -502,7 +501,9 @@ function addEvents(){
     $this.css({left: "+=1", top: "+=2"});
     setTimeout(function (){
       $this.css({left: "-=1", top: "-=2"});
-      // $('body').css('background-image', 'url("i/nexus' + Math.floor(Math.random() * 33) + '.jpg")');
+      // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
+      // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment below
+      // $('body').css('background-image', 'url("i/nexus' + Math.floor(Math.random() * 43) + '.jpg")');
       game = layout();
       stack.nodelist = [];
       stack.list = [];
@@ -542,12 +543,6 @@ function addEvents(){
     break;
 
    case 4: // play
-    // if(1 && stack.list.length === 0 && stack.nodelist.length === 0){ 
-    //   game = layout(10913);
-    //   stack.list = stack.list.concat(JSON.parse(input));
-    //   setSolved(true);
-    //   setupLayout();
-    // }
     break;
 
    case 5: // speed
@@ -567,6 +562,9 @@ function addEvents(){
 
     xhrrequest(message('~'), true);
     break;
+
+   case 7: // help
+    window.location = "instructions.html";
   }
   return false;
  });
@@ -615,6 +613,7 @@ function xhrrequest(msg, flag){
   if (host.match(/^http:/)) {
     xmlhttp.open("GET", host + "dynamic/solve/" + msg, true);
     busy = true;
+    if (flag) icon.css("background-position", "35% 87.5%");
     try {
       xmlhttp.send();
     } catch(err) {
@@ -626,25 +625,25 @@ function xhrrequest(msg, flag){
 } }
 
 function undo (){
-  var node = stack.get(), seq = [];
+  var node = stack.get(), seq = [], first = true;
   node = node.map(function (a){return [a[2], a[3], a[0], a[1], a[4]];});
   while( node[node.length-1][4].match(/^a/) ) 
-    seq.push(playAll({entry: [node.pop()], auto: true, frwd: false, done: false})); 
-  seq.push(playAll({entry: node, auto: false, frwd: false, done: true}));
+    seq.push(playAll({entry: [node.pop()], auto: true, frwd: false, done: false, first: first})); 
+  seq.push(playAll({entry: node, auto: false, frwd: false, done: true, first: first}));
   //console.log(message('\n'));
   busy = true;
   $.Velocity.RunSequence(seq);
 }
 
 function redo (){
-  var node = stack.get(), seq = [], heap = [];
+  var node = stack.get(), seq = [], heap = [], first = true;
   while( node.length && node[0][4].match(/^(?!a)/) ) 
     heap.push(node.shift());
   seq.push(playAll({entry: heap, 
-    auto: false, frwd: true, done: node.length ? false : true}));
+    auto: false, frwd: true, done: node.length ? false : true, first: first}));
   while(node.length>0)
     seq.push(playAll({entry: [node.shift()], 
-      auto: true, frwd: true, done: node.length ? false : true})); 
+      auto: true, frwd: true, done: node.length ? false : true, first: first})); 
   //console.log(message('\n'));
   busy = true;
   $.Velocity.RunSequence(seq);
@@ -652,7 +651,7 @@ function redo (){
 
 function beginFactory (ids){
   function begin(){
-    var src = $( ids.map(function (id){return "#" + id;}).join(", ") );
+    var src = $(ids);
     $('.bus').toggle().css({top: src.offset().top, left: src.offset().left});
     var ytop = 0;
     $('.bus').append(src).children().each( function (){ 
@@ -663,30 +662,18 @@ function beginFactory (ids){
   return begin;
 }
 
-function completeFactory (done){
+function completeFactory (dstparent, ytop, done, first){
   function complete(){
-    busy = !done;
-    var dstparent, 
-      ytop = 0,
-      dst_col = ($(this).offset().left - 10) / 110;
-    if ($(this).offset().top == $('.freecell').offset().top){
-      if ($(this).offset().left < $('.homecell').offset().left){
-        dstparent = $('.freecell').eq(dst_col);
-      } else {
-        dstparent = $('.homecell').eq(dst_col-4);
-      }
-    } else {
-      dstparent = $('.cascades').eq(dst_col);
-      ytop = $(this).offset().top - 280; // this==bus
-    }
-    $('.bus').children().removeClass('hilite-auto');
-    $('.img').removeClass('hilite-yellow hilite-orange hilite-blue');
+    console.log(first);
+    if (first) $('.img').removeClass('hilite-yellow hilite-orange');
+    $('.bus').children().removeClass('hilite-blue hilite-auto');
     dstparent.append( $('.bus').toggle().children()
       .each( function (){
         $(this).css({top: ytop, left: 0}); // this==dst
         ytop+=offset_height;
       })
     );
+    busy = !done;
   }
   return complete;
 }
@@ -700,8 +687,8 @@ function playAll (q){
       e: $('.bus'),
       p: {top: p.dst.offset().top + p.top * offset_height, left: p.dst.offset().left},      
       o: {duration: speed(p, q),
-        begin: beginFactory(p.src), // .deck #id's
-        complete: completeFactory(q.done) 
+        begin: beginFactory( p.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
+        complete: completeFactory(p.dst, p.top * offset_height, q.done, q.first) 
     } };
 
   q.entry.forEach(function (move) {
@@ -711,14 +698,15 @@ function playAll (q){
   if (q.frwd){
     if (q.auto){
       $("#" + p.src).addClass('hilite-auto');
-  } else {
-    $( p.src.map(function (id){return "#" + id;}).join(", ") ).addClass('hilite-blue');
-    p.dst.children().length ?
-      p.dst.children().last().addClass('hilite-orange') :
-      p.dst.addClass('hilite-orange');
+    } else {
+      $( p.src.map(function (id){return "#" + id;}).join(", ") ).addClass('hilite-blue');
+      p.dst.children().length ?
+        p.dst.children().last().addClass('hilite-orange') :
+        p.dst.addClass('hilite-orange');
     }
     if (stack.isKings()) setSolved(true);
   }
+  q.first = false;
   return result;
 }
 
@@ -855,6 +843,3 @@ function gen(tableau){
   } } } }
   return nodelist;
 }
-
-// var input = '[[[1,7,5,7,"cc"],[3,7,5,0,"ach"],[7,6,7,0,"ach"]],[[4,6,0,0,"cf"]],[[6,5,5,8,"cc"],[6,6,5,9,"cc"]],[[6,3,1,7,"cc"],[6,4,1,8,"cc"],[6,2,5,0,"ach"]],[[6,1,1,9,"cc"]],[[1,6,6,1,"ce"],[1,7,6,2,"ce"],[1,8,6,3,"ce"],[1,9,6,4,"ce"],[1,5,6,0,"ach"]],[[4,5,6,5,"cc"],[4,4,6,0,"ach"]],[[5,6,6,6,"cc"],[5,7,6,7,"cc"],[5,8,6,8,"cc"],[5,9,6,9,"cc"],[5,5,7,0,"ach"]],[[0,7,1,0,"cf"],[0,6,6,0,"ach"]],[[1,0,0,6,"fc"]],[[2,7,1,0,"cf"]],[[3,6,0,7,"cc"]],[[3,5,6,0,"ch"]],[[3,4,6,0,"ch"]],[[3,3,2,0,"cf"],[3,2,4,0,"ach"],[2,6,4,0,"ach"],[6,9,4,0,"ach"],[7,5,7,0,"ach"]],[[2,5,3,0,"cf"],[2,4,5,0,"ach"],[6,8,5,0,"ach"],[2,0,4,0,"afh"],[2,3,5,0,"ach"]],[[5,4,6,0,"ch"]],[[5,3,2,0,"cf"],[5,2,7,0,"ach"],[6,7,4,0,"ach"],[7,4,5,0,"ach"],[0,7,7,0,"ach"],[6,6,7,0,"ach"],[7,3,6,0,"ach"],[0,6,4,0,"ach"],[6,5,4,0,"ach"],[7,2,5,0,"ach"],[0,5,7,0,"ach"],[3,1,6,0,"ach"],[6,4,7,0,"ach"],[0,4,5,0,"ach"],[6,3,6,0,"ach"]],[[4,3,7,0,"ch"],[4,2,4,0,"ach"],[0,0,4,0,"afh"],[1,4,5,0,"ach"],[5,1,4,0,"ach"],[6,2,5,0,"ach"],[0,3,6,0,"ach"],[1,3,5,0,"ach"],[0,2,7,0,"ach"],[2,2,7,0,"ach"],[6,1,6,0,"ach"],[1,0,6,0,"afh"],[2,1,4,0,"ach"],[4,1,4,0,"ach"],[2,0,5,0,"afh"],[3,0,5,0,"afh"],[0,1,7,0,"ach"],[1,2,7,0,"ach"],[7,1,4,0,"ach"],[1,1,6,0,"ach"]]]'
-// ;

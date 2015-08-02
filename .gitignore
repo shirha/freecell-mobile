@@ -4,5 +4,3 @@
 *.class
 /fc$log.txt
 /upload*.txt
-
-/target
