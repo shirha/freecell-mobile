@@ -362,6 +362,7 @@ function dstselectFree(element) {
         node = [];
     node.push([src_col, src_row+1, dst_col, 0, 'cf']);
     stack.add(autoplay(node));
+    element.removeClass('hilite-blue').last().addClass('hilite-blue');
     redo();
   }
 }
@@ -379,6 +380,7 @@ function dstselectHome(element) {
       node.push([src_col, src_row+1, src.suit+4, 0, 'ch']);
     }
     stack.add(autoplay(node));
+    element.removeClass('hilite-blue').last().addClass('hilite-blue');
     redo();
   }
 }
@@ -502,7 +504,7 @@ function addEvents(){
     setTimeout(function (){
       $this.css({left: "-=1", top: "-=2"});
       // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
-      // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment below
+      // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment next line
       $('body').css('background-image', 'url("i/nexus' + Math.floor(Math.random() * 11) + '.jpg")');
       game = layout();
       stack.nodelist = [];
@@ -543,6 +545,17 @@ function addEvents(){
     break;
 
    case 4: // play
+    if(stack.index === 0){ // no accidental resets
+      $this.css({left: "+=1", top: "+=2"});
+      var gameno = prompt("Please enter gameno: ");
+      if (!!gameno && gameno.length < 7 && !!gameno.match(/^\d+$/)){
+        var gameint = parseInt(gameno, 10);
+        if (gameint > 0){
+          game = layout(gameint);
+          setupLayout();
+      } }
+      $this.css({left: "-=1", top: "-=2"});
+    }
     break;
 
    case 5: // speed
@@ -598,12 +611,12 @@ function xhrrequest(msg, flag){
           stack.list = stack.list.concat(JSON.parse("["+result+"]"));
           setSolved(true);
       } } else {
-        icon.css("background-position", "30% 87.5%");
+        $('.icon').eq(6).css("background-position", "30% 87.5%");
         xhrconnect = false;
       }
       busy = false;
       if (flag) {
-        setTimeout(function (){icon.css({left: "-=1", top: "-=2"});},100); 
+        setTimeout(function (){$('.icon').eq(6).css({left: "-=1", top: "-=2"});},100); 
         hint();
   } } };
 
@@ -662,11 +675,10 @@ function beginFactory (ids){
   return begin;
 }
 
-function completeFactory (dstparent, ytop, done, first){
+function completeFactory (dstparent, ytop, done, first, hilite){
   function complete(){
-    console.log(first);
     if (first) $('.img').removeClass('hilite-yellow hilite-orange');
-    $('.bus').children().removeClass('hilite-blue hilite-auto');
+    $('.bus').children().removeClass(hilite);
     dstparent.append( $('.bus').toggle().children()
       .each( function (){
         $(this).css({top: ytop, left: 0}); // this==dst
@@ -688,7 +700,7 @@ function playAll (q){
       p: {top: p.dst.offset().top + p.top * offset_height, left: p.dst.offset().left},      
       o: {duration: speed(p, q),
         begin: beginFactory( p.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
-        complete: completeFactory(p.dst, p.top * offset_height, q.done, q.first) 
+        complete: completeFactory(p.dst, p.top * offset_height, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
     } };
 
   q.entry.forEach(function (move) {
