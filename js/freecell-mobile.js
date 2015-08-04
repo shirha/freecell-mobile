@@ -545,17 +545,18 @@ function addEvents(){
     break;
 
    case 4: // play
-    if(stack.index === 0){ // no accidental resets
-      $this.css({left: "+=1", top: "+=2"});
-      var gameno = prompt("Please enter gameno: ");
-      if (!!gameno && gameno.length < 7 && !!gameno.match(/^\d+$/)){
-        var gameint = parseInt(gameno, 10);
-        if (gameint > 0){
-          game = layout(gameint);
-          setupLayout();
-      } }
-      $this.css({left: "-=1", top: "-=2"});
-    }
+    $this.css({left: "+=1", top: "+=2"});
+    var gameint = prompt("Please enter gameno: ");
+    if (!!gameint && gameint.length < 7 && !!gameint.match(/^\d+$/)){
+      gameint = parseInt(gameint, 10);
+      if (gameint > 0){
+        game = layout(gameint);
+        stack.nodelist = [];
+        stack.list = [];
+        setSolved(false);
+        setupLayout();
+    } }
+    $this.css({left: "-=1", top: "-=2"});
     break;
 
    case 5: // speed
