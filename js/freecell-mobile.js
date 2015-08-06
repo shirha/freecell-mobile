@@ -611,7 +611,10 @@ function xhrrequest(msg, flag){
           var result = resp.replace(/~/g, ",").replace(/([acefh]+)/g, '"$1"');
           stack.list = stack.list.concat(JSON.parse("["+result+"]"));
           setSolved(true);
-      } } else {
+        } else {
+          setSolved(false);
+        }
+      } else {
         $('.icon').eq(6).css("background-position", "30% 87.5%");
         xhrconnect = false;
       }

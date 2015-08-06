@@ -1,0 +1,67 @@
+$(document).ready(function (){ 
+  setupLayout() }
+function setupLayout(){
+function hint(){
+
+var game = layout();
+function layout(){
+  var shuffle = function () {
+  var createDivs = function(cls, n, ofsleft, ofsheight, imgpad, imgwidth, imgheight,...
+
+var stack = {
+  list: [],         // init @ page load && new game
+  nodelist: [],     // init @ page load && new game
+  index: 0,         // init @ setup
+  tableau: [],      // init @ setup
+
+var Card = function (src){
+Card.prototype = { 
+
+function addEvents(){
+  $('.deck').each(function (){ $('.cascades').eq(n++ % 8).append(card) });
+
+  $('.deck, .freecell, .homecell, .cascades').on('click', function(e){
+
+  << selection phase >>
+    function checkAvailable(){
+      gen(stack.tableau);
+
+  << destination phase >>
+    $('.freecell')        [src_col, src_row, dst_col,  0,      'cf']
+    $('.homecell')        [  “        “    , src_suit, 0,      'fh', 'ch']
+    $('.cascades')        [  “        “    , dst_col, dst_row, 'fe', 'fc', 'ce', 'cc']
+      stack.add(autoplay(node));           , src_suit, 0,      'afh', 'ach']
+      redo();
+
+  $('.icon').on('click', function(e){
+  switch ($this.index()){
+
+function undo (){
+function redo (){
+  seq.push(playAll({entry: [node.shift()], 
+  $.Velocity.RunSequence(seq);
+
+function beginFactory (ids){
+  function begin(){
+  return begin;
+
+function completeFactory (done){
+  function complete(){
+  return complete;
+
+function playAll (q){
+  var p = Play(q.entry),
+    result = { e: , p: , o: {begin: beginFactory(), complete: completeFactory()}}
+  q.entry.forEach(function (move) {
+    stack.playTableau(move);
+  return result;
+
+function Play (entry){
+  return {src: , dst: , top: , delta};
+
+function autoplay (list){
+  return list;
+function adjacentHomecells (tableau, src){
+
+function gen(){
+  return nodelist;
