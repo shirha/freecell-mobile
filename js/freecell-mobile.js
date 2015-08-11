@@ -200,15 +200,15 @@ var stack = {
     while (this.nodelist.length > this.index+1) this.nodelist.pop();
   },
   add: function (entry){
+    this.hist.push("add: "+ this.move());
     if (this.list.length == this.index){
       this.list.push(entry);
-      this.hist.push("add: "+ this.move());
       this.index++;
     } else {
-      this.hist.push("add: "+ this.move());
       if (JSON.stringify(entry) != JSON.stringify(this.list[this.index])  ){
         this.trimLists();
-        this.list.push(entry); this.index++;
+        this.list.push(entry); 
+        this.index++;
         setSolved(false);
       } else {
         this.index++;  
@@ -226,28 +226,20 @@ var stack = {
     this.hist.push("inc: "+ this.move()); 
     this.index++; 
   },
-  initTableau: function (){ var i, j, src;
-    for (i=0; i<4; i++){
-      this.tableau[i] = new Array(20);
-      src = $('.freecell').eq(i).children();
-      this.tableau[i][0] = new Card(src.length>0 ? src.eq(0) : void 0);
-    }
-    for (i=0; i<4; i++){
-      this.tableau[i+4] = new Array(20);
-      src = $('.homecell').eq(i).children().last();
-      this.tableau[i+4][0] = new Card(src.length>0 ? src.eq(0) : void 0);
-    }
-    for (i=0; i<8; i++){
-      src = $('.cascades').eq(i).children();
-      for (j=0; j<19; j++){
-        this.tableau[i][j+1] = new Card(src.length>j ? src.eq(j) : void 0);
+  initTableau: function (){
+    for (var i = 0; i < 8; i++){
+      this.tableau[i] = [];
+      this.tableau[i][0] = new Card(); 
+      var src = $('.cascades').eq(i).children();
+      for (var j = 0; j < 19; j++){
+        this.tableau[i][j + 1] = new Card(j < src.length ? src.eq(j) : undefined);
   } } },
   playTableau: function(move) {
     var src = this.tableau[move[0]][move[1]];
     this.tableau[move[2]][move[3]] = src;
     move[1] === 0 && move[0] >= 4 && src.rank > 1 ? 
       this.tableau[move[0]][move[1]] = new Card(src.rank - 1, src.suit) : 
-      this.tableau[move[0]][move[1]] = new Card(); // void 0
+      this.tableau[move[0]][move[1]] = new Card();
   }
 };
 
