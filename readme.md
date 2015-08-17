@@ -10,7 +10,7 @@ The UI for freecell-solver !
 
 This will start-up a local webserver and open a browser to http://localhost:8080
 
-read the "instructions.html" and play in fullscreen (F11) on the browser
+read the "instructions.html" and play in fullscreen (F11) in the browser
 
 Enjoy!
 
