@@ -288,37 +288,34 @@ function nodeString (tableau, node){
 // if solved is also true and you choose the same selection,
 // hilite-orange destination card and hilite-autoplay also
 
-function checkAvailable(){ var i, node, src, auto;
-  removehilite('hilite-purple'); 
+function checkAvailable(){ var node, src;
+  removehilight('hilite-purple'); 
   var hilite = $('.hilite-blue').map(function(){
-    return new Card($( this )).toString();}).toArray().join(",");
+    return new Card($( this )).toString();
+  }).toArray().join(",");
 
   if (stack.nodelist[stack.index] === undefined) 
-    stack.nodelist[stack.index]=gen(stack.tableau);
-  for (i=0; i<stack.nodelist[stack.index].length; i++){
+    stack.nodelist[stack.index] = gen(stack.tableau);
+  for (var i = 0; i < stack.nodelist[stack.index].length; i++){
     node = stack.nodelist[stack.index][i][0];
     src  = new Card(source(node)).toString();
-    if (!hilite.match(src)) continue;
-    hilight(node,'hilite-yellow');
+    if (hilite.match(src))
+      addhilight(node,'hilite-yellow');
   }
   if (isSolved){ 
     src = stack.list[stack.index].filter(function (node){
       return node[4].match(/^(?!a)/);}).map(function(node){
-      return new Card(source(node));
+        return new Card(source(node));
       }).join(",");
-    if (hilite == src){
+    if (hilite === src){
       node = stack.list[stack.index][0];
-      hilight(node,'hilite-orange');
-      auto = stack.list[stack.index].filter(function (node){
-        return node[4].match(/^a/);});
-      auto.forEach(function(node){
+      addhilight(node,'hilite-orange'); // NOTE: already has hilite-yellow !
+      stack.list[stack.index].filter(function (node){
+        return node[4].match(/^a/);
+      }).forEach(function(node){
         source(node).addClass('hilite-auto');
       });
 } } }
-
-function removehilite (extra){ 
-  $('.img').removeClass('hilite-yellow hilite-auto hilite-orange '+extra); 
-}
 
 function source (node){
   return node[1] === 0 ? 
@@ -326,7 +323,7 @@ function source (node){
     $('.cascades').eq(node[0]).children().eq(node[1]-1);
 }
 
-function hilight(node, color){
+function addhilight(node, color){
   if (node[3] === 0){
     if(node[2]<4){
       $('.freecell').eq(node[2]).addClass(color);
@@ -343,11 +340,15 @@ function hilight(node, color){
     $('.cascades').eq(node[2]).children().last().addClass(color);
 } }
 
+function removehilight (extra){ 
+  $('.img').removeClass('hilite-yellow hilite-auto hilite-orange '+extra); 
+}
+
 function dstselectFree(element) {
   var dstparent = $('.freecell:empty:first');
   if (dstparent.length==4 ||
       element.parent().hasClass('freecell')){
-    removehilite('hilite-blue');
+    removehilight('hilite-blue');
   } else {
     var src_col = (element.parent().offset().left - 10) / 110,
         src_row =  element.last().position().top / offset_height,
@@ -404,12 +405,13 @@ function dstselectCasc(element, $this) {
         }).join(",");
       }).join(",");
 
-  if (!!nodestr){
+  if (!!nodestr &&  // NOTE: could also have hilite-orange FIX: #44098
+     (dstparent.hasClass('hilite-yellow') || 
+      dstparent.children().hasClass('hilite-yellow'))){
     element.each(function (){
       var card = new Card($( this )).toString();
-      if (!nodestr.match(card)){
+      if (!nodestr.match(card))
         $( this ).removeClass('hilite-blue').addClass('hilite-purple');
-      }
     });
 
     element = $('.hilite-blue');
@@ -450,21 +452,21 @@ function addEvents(){
   // was a hilite-blue cascade column clicked? toggle off
     if ($this.hasClass('hilite-blue') ||
         $this.parent().children().hasClass('hilite-blue')){
-      removehilite('hilite-blue'); // hilite-purple');
+      removehilight('hilite-blue'); // hilite-purple');
 
   // no hilite-blue cards? then hilite-blue excl. home
     } else if ($('.hilite-blue').length === 0){
       if ($this.hasClass('deck')){
         if ($this.parent().hasClass('freecell')){
           $this.addClass('hilite-blue');
-          checkAvailable(new Card($this));
+          checkAvailable();
         } else if ($this.parent().hasClass('cascades')){
           var child = $this.parent().children();
           var index = child.length-1;
           while(index > $this.index() &&
              inSequence(child.eq(index), child.eq(index-1))) index--;
           child.slice( index ).addClass('hilite-blue');
-          checkAvailable(new Card($('.hilite-blue').first()));
+          checkAvailable();
         } else {}
       } else {}
     } else {
@@ -492,7 +494,7 @@ function addEvents(){
   switch ($this.index()){
 
    case 0: // new game
-    removehilite('hilite-blue hilite-purple');
+    removehilight('hilite-blue hilite-purple');
     $this.css({left: "+=1", top: "+=2"});
     setTimeout(function (){
       $this.css({left: "-=1", top: "-=2"});
@@ -508,7 +510,7 @@ function addEvents(){
     break;
 
    case 1: // reset game
-    removehilite('hilite-blue hilite-purple');
+    removehilight('hilite-blue hilite-purple');
     $this.css({left: "+=1", top: "+=2"});
     setTimeout(function (){
       $this.css({left: "-=1", top: "-=2"});
@@ -518,7 +520,7 @@ function addEvents(){
 
    case 2: // undo
     if(!stack.isEob()){
-      removehilite('hilite-blue hilite-purple');
+      removehilight('hilite-blue hilite-purple');
       $this.css({left: "+=1", top: "+=2"});
       setTimeout(function (){$this.css({left: "-=1", top: "-=2"});},100);
       undo();
@@ -559,7 +561,7 @@ function addEvents(){
     break;
 
    case 6: // solve
-    removehilite('hilite-blue hilite-purple');
+    removehilight('hilite-blue hilite-purple');
     if (isSolved) {
       setSolved(false);
       hint();
