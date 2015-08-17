@@ -200,11 +200,12 @@ var stack = {
     while (this.nodelist.length > this.index+1) this.nodelist.pop();
   },
   add: function (entry){
-    this.hist.push("add: "+ this.move());
     if (this.list.length == this.index){
       this.list.push(entry);
+      this.hist.push("add: "+ this.move());
       this.index++;
     } else {
+      this.hist.push("add: "+ this.move());
       if (JSON.stringify(entry) != JSON.stringify(this.list[this.index])  ){
         this.trimLists();
         this.list.push(entry); 
