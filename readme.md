@@ -6,7 +6,7 @@ The UI for freecell-solver !
 
 * download and unzip the package
 
-NOTE. To prevent a Windows "Security Warning". Right-click freecell.bat, choose Properties and in the General tab, click the 'Unblock' button.
+Note: To prevent a Windows "Security Warning", right-click freecell.bat, choose Properties and in the General tab, click the 'Unblock' button.
 
 * double-click the freecell.bat
 
