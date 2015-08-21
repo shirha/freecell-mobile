@@ -14,4 +14,4 @@
 #  on your system, the jre is not enough
 #
 
-java -jar freecell-mobile.jar
+java -jar target/freecell-mobile-0.1-SNAPSHOT.jar
