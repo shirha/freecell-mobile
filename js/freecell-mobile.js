@@ -59,8 +59,12 @@ function setupLayout(){
   addEvents();  // game, list & nodelist init'd at page load & new game
   stack.index = 0, stack.hist = [], stack.initTableau(), slow = NORMAL;
   setSolved(); // need to reset 'i' button
+
+  gray();
   hint();
 }
+
+
 
 function hint(){
   if(stack.isEof() || !isSolved){
@@ -75,6 +79,15 @@ function hint(){
     stack.isEof() ? "15% 87.5%" : "15% 75%");
 
   $('.icon').eq(7).attr('title', "#" + game.gameno + " - click for help");
+}
+
+function gray(){
+  $( [0, 1, 2, 3]
+    .map(function(i) {return [$('.homecell').eq(i).children().length + 1, i];})
+    .filter(function(r) {return r[0]<14;})
+    .map(function(c) {var s = new Card(c[0], c[1]); return "#" + s;})
+    .join(", ")
+   ).addClass('hilite-next');
 }
 
 var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, 
@@ -573,7 +586,7 @@ function addEvents(){
     break;
 
    case 7: // help
-    window.location = "instructions.html";
+//    window.location = "instructions.html";
   }
   return false;
  });
@@ -676,7 +689,7 @@ function beginFactory (ids){
 
 function completeFactory (dstparent, ytop, done, first, hilite){
   function complete(){
-    if (first) $('.img').removeClass('hilite-yellow hilite-orange');
+    if (first) $('.img').removeClass('hilite-yellow hilite-orange hilite-next');
     $('.bus').children().removeClass(hilite);
     dstparent.append( $('.bus').toggle().children()
       .each( function (){
@@ -684,6 +697,7 @@ function completeFactory (dstparent, ytop, done, first, hilite){
         ytop+=offset_height;
       })
     );
+    if (done) gray();
     busy = !done;
   }
   return complete;
