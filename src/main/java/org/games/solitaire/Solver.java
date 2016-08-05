@@ -59,6 +59,7 @@ public class Solver {
 	private int gameno;
 	private int maxnodes = 2000;
 	private int blocksolve = 1;
+	private int maxdepth = 50;
 	private boolean winxp = false;
 	private boolean showall = false;
 	private String input = "";
@@ -79,11 +80,12 @@ public class Solver {
 	private Stats stats;
 	private Logger logger;
 	
-	public Solver (String input, int gameno, int maxnodes, int blocksolve, boolean winxp, boolean showall) {
+	public Solver (String input, int gameno, int maxnodes, int blocksolve, int maxdepth, boolean winxp, boolean showall) {
 		this.input = input;
 		this.gameno = gameno;
 		this.maxnodes = maxnodes;
 		this.blocksolve = blocksolve;
+		this.maxdepth = maxdepth;
 		this.winxp = winxp;
 		this.showall = showall;
 	}
@@ -109,9 +111,10 @@ public class Solver {
 			}
 
 			logger = new Logger(gameno);
-			logger.log(String.format("--gameno %s --maxnodes %s %s%s%s", gameno, maxnodes,
+			logger.log(String.format("--gameno %s --maxnodes %s %s%s%s%s", gameno, maxnodes,
 				winxp ? " --winxp" : " --nowinxp",
 				blocksolve > 1 ? " --blocksolve " + blocksolve : "",
+				maxdepth == 50 ? "" : " --maxdepth " + maxdepth,
 				showall ? " --showall" : ""));
 		    logger.log("\n" + tableau.toString());
 			
@@ -124,7 +127,7 @@ public class Solver {
 			position.put(entre.key, entre.value);
 			nextstack.add(entre);
 			
-			while (depth < MAXDEPTH && nextstack.size() > 0 && !found){
+			while (depth < maxdepth && nextstack.size() > 0 && !found){
 				cnt = 0;
 				lvl = nextstack.size();
 

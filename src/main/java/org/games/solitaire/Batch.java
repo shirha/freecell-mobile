@@ -57,6 +57,9 @@ public class Batch {
 	@Parameter(names = "--blocksolve", description = "Generate blocksize solutions")
 	private int blocksolve = 1;
 	
+	@Parameter(names = "--maxdepth", description = "Increase max depth used")
+	private int maxdepth = 50;
+	
 	@Parameter(names = "--winxp", description = "Solve for Windows XP")
 	private boolean winxp = false;
 	
@@ -90,7 +93,7 @@ public class Batch {
 			input = new Scanner(new File("input.txt"), "UTF-8").useDelimiter("\\A").next();
 		}
 		
-    	Solver solver = new Solver(input, gameno, maxnodes, blocksolve, winxp, showall);
+    	Solver solver = new Solver(input, gameno, maxnodes, blocksolve, maxdepth, winxp, showall);
  		try {
 			solver.solve();
 		} catch (Exception e) {

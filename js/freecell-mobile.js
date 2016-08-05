@@ -554,7 +554,7 @@ function addEvents(){
 
    case 4: // play
     $this.css({left: "+=1", top: "+=2"});
-    var gameint = prompt("Please enter gameno: ");
+    var gameint = prompt("Please enter gameno: ", game.gameno);
     if (!!gameint && gameint.length < 7 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
       if (gameint > 0){
