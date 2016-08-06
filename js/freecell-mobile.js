@@ -615,7 +615,7 @@ function addEvents(){
     break;
 
    case 7: // help
-//    window.location = "instructions.html";
+    window.location = "instructions.html";
   }
   return false;
  });
