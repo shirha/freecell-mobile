@@ -4,6 +4,8 @@
   use strict;
   use utf8;
 
+#SN  perl -e "print join( ' ',map{(split/\|/)[1]} split/~/,(split/,/,<>)[-1] )" <upload.txt
+
   my $htm = << 'eof'
 <!DOCTYPE html><head><title>Freecell in Miniature</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">

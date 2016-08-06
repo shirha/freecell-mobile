@@ -5,15 +5,15 @@ self.addEventListener('message', function(e) {  // todo: Tableau class
   var log = '    d: '+depth+', p: '+size+', e: '+elapsed;
   self.postMessage({audit: log, result: data});
   console.log(elapsed);
-  position = nextkeys = tableau = stack = nextstack = stats = null;
+  position = nextstack = nextkeys = null;
 }, false);
 
 var MAXCOLS = 8, MAXROWS = 20, HOMEOFFSET = 4, MAXDEPTH = 50, MAXNODES = 2000, MAXSCORE = 64+8+6*8*2,
-  position, nextkeys, tableau, stack, nextstack, stats, depth, found, cnt, lvl, loscore, midscore, totscore, result, size,
+  position = Object.create(null), size = depth = found = 0,
+
   rank = function (r){ return r      & 15 }, 
   suit = function (s){ return s >> 4 &  3 },
   isKings = function (tableau){ for (var f=!0, c=4; 8>c; c++) if (13 !== rank(tableau[c][0])){ f=!1; break; } return f; },
-  o = function (n, d){ return ('      '+n+' ').substring( Number(n).toString().length +6-d ); },
   zeroArray = function (len){ for (var i = 0, array = Array(len); i < len; ++i) array[i] = 0; return array; };
 
 function Entry (tableau){ // Class
@@ -62,7 +62,7 @@ function fromToken (entry){
   return tableau;
 }
 
-function m (){
+function m (tableau){
   for (var msg = "\n", flag = true, r = 0; flag;){
     r > 0 && (flag = false); // bottom row blank ok!
     for (var c = 0; c < 8; c++){
@@ -73,42 +73,55 @@ function m (){
 } 
 
 function solve (e){
-  position = Object.create(null), stats = zeroArray(MAXSCORE), tableau = [], stack = [], nextstack = [], result = [], depth = size = found = 0;
+  var tableau = [], stack = [], lvl = 0,
+    init = function (){
+      nextstack = [], nextkeys = Object.create(null), stats = zeroArray(MAXSCORE), loscore = midscore = MAXSCORE-2, hiscore = totscore = cnt = 0; 
+    },
+    out = function (){
+      return 'depth='+f(depth,3)+' score='+f(loscore,3)+f(midscore,3)+f(hiscore,3)+' stats[mid]='+f(stats[midscore],5)+f(stats[midscore+1],5)+' lvl='+f(lvl,5)+' cnt='+f(cnt,6)+' p='+f(size,6); 
+    },
+    f = function (n, d){ 
+      return ('      '+n+' ').substring( Number(n).toString().length +6-d ); 
+    };
 
   for (var c = 0; c < MAXCOLS; c++) {
     tableau[c] = [];
     for (var r = 0; r < MAXROWS; r++) {
       tableau[c][r] = e.data[c][r].rank === 0 ? 0 : e.data[c][r].rank + e.data[c][r].suit * 16 + 64;
   } } 
-  console.log( m() );
+  console.log( m(tableau) );
 
+  init(), cnt++;
   var entre = new Entry(tableau);
-  entre.value.score = midscore = heuristic(tableau);
+  entre.value.score = loscore = hiscore = heuristic(tableau);
+  midscore = MAXSCORE-2
   position[entre.key] = entre.value;
   nextstack.push(entre);
+  console.log(out());
 
   while (depth < MAXDEPTH && nextstack.length > 0 && !found){
-    cnt = 0;
-
-    stack = nextstack.filter(function (entry) { 
+    var stack = nextstack.filter(function (entry) { 
       if (entry.value.score <= midscore) {
         position[entry.key] = entry.value; size++;
         return true;
       } 
       return false;
     });
-    lvl = stack.length;
-    nextkeys = Object.create(null), nextstack = [], stats = zeroArray(MAXSCORE), hiscore = totscore = 0, loscore = midscore = MAXSCORE-2; 
+    lvl = stack.length, depth++;
+
+    init(); 
     for (var i = 0; i < stack.length; i++){
       tableau = fromToken(stack[i]);
       search(tableau);
       if (found) break;
     }
-    console.log('depth='+o(depth,3)+' score='+o(loscore,3)+o(midscore,3)+o(hiscore,3)+' stats[mid]='+o(stats[midscore],5)+o(stats[midscore+1],5)+' lvl='+o(lvl,5)+' cnt='+o(cnt,6)+' p='+o(size,6));
-    depth++;  
+    console.log(out());
   }
+  console.log(scores.reverse().map(function (s, i){return i+++':'+s},0).join(' '));
   return result.reverse();
 }
+
+var nextstack, nextkeys, stats, loscore, midscore, hiscore, totscore, cnt;
 function search (tableau) {
   var nodelist = gen(tableau);
   for (var i = 0; i < nodelist.length; i++){
@@ -117,7 +130,7 @@ function search (tableau) {
     autoplay(tableau, nodelist[i]);
 
     var entry = new Entry(tableau), score;
-        entry.value.depth = depth + 1;
+        entry.value.depth = depth;
         entry.value.node  = nodelist[i];
         entry.value.score = score = heuristic(tableau);
     
@@ -144,8 +157,10 @@ function search (tableau) {
     undo(tableau, nodelist[i]);
 } }
 
+var result = [], scores = []; 
 function backtrack (entry){
   while (true) {
+    scores.push(entry.value.score);
     if (entry.value.depth == 0) break;
     result.push(entry.value.node); 
 
@@ -195,10 +210,10 @@ var quickSort = (function () {
 
 function heuristic (tableau) {
   var score = 64; //, h = new Helper(tableau);
-    z = [], ecount = 0, fcount = 0, eindex = -1, findex = -1;
+    z = zeroArray(8), ecount = fcount = 0, eindex = findex = -1;
 
   for(c=0;8>c;c++){   // helpers
-    0 === rank(tableau[c][1])&&(ecount++,eindex<0&&(eindex=c)),z[c]=0;
+    0 === rank(tableau[c][1])&&(ecount++,eindex<0&&(eindex=c)); //,z[c]=0;
     for(r=1;19>r&&0 !== rank(tableau[c][r]);r++) z[c]=r;
   }
   for(c=0;4>c;c++)
