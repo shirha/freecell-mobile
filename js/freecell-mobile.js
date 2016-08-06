@@ -46,6 +46,27 @@ $(document).ready(function (){
 function setupLayout(){
   if (firsttime){
     firsttime = false; 
+
+    try {
+      solver = new Worker('js/solver.js');
+      solver.addEventListener('message', function(e) {
+        if (e.data.result.length>0){
+          stack.trimLists();
+          stack.list = stack.list.concat(e.data.result);
+          setSolved(true);
+        }else{
+          setSolved(false);
+        }
+          //console.log(e.data);
+        audit = e.data.audit;
+        setTimeout(function (){$('.icon').eq(6).css({left: "-=1", top: "-=2"});},100); 
+        busy = false;
+        hint();
+      }, false);
+    } catch (e){
+      webworker = false;
+    }
+
     xhrrequest("~", false); // ping the server
 
     if (!!navigator.userAgent.match(/Android/)){ // works for Nexus 7
@@ -90,16 +111,16 @@ function gray(){
    ).addClass('hilite-next');
 }
 
-var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, 
+var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, solver, webworker = true, audit = "", nexus = 0,
   isMobile = !!("ontouchstart" in window), 
   offset_height = isMobile ? 69 : 50,
   isSolved = false,
   setSolved = function (flag){
     (isSolved = arguments.length > 0 ? flag : isSolved) ?
       $('.icon').eq(6).css("background-position", "30% 100%") :
-    xhrconnect ?
-      $('.icon').eq(6).css("background-position", "30% 75%"  ) :
-      $('.icon').eq(6).css("background-position", "30% 87.5%");
+    !(xhrconnect||webworker) ?
+      $('.icon').eq(6).css("background-position", "30% 87.5%") :
+      $('.icon').eq(6).css("background-position", "30% 75%"  );
   },
   setSpeed = function (){
     if (slow == NORMAL) {
@@ -121,7 +142,7 @@ var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true
 
 function layout(){
   var shuffle = function (demo) {
-    var seed = demo || Math.floor(Math.random() * 100000), 
+    var seed = demo || Math.floor(Math.random() * 1000000), 
       gameno = seed, 
       deck = [],
       i    = 52,
@@ -510,10 +531,10 @@ function addEvents(){
     removehilight('hilite-blue hilite-purple');
     $this.css({left: "+=1", top: "+=2"});
     setTimeout(function (){
-      $this.css({left: "-=1", top: "-=2"});
+      $this.css({left: "-=1", top: "-=2"}); 
       // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
       // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment next line
-      $('body').css('background-image', 'url("i/nexus' + Math.floor(Math.random() * 11) + '.jpg")');
+      $('body').css('background-image', 'url("i/nexus' + nexus++ % 10 + '.jpg")');
       game = layout();
       stack.nodelist = [];
       stack.list = [];
@@ -554,8 +575,8 @@ function addEvents(){
 
    case 4: // play
     $this.css({left: "+=1", top: "+=2"});
-    var gameint = prompt("Please enter gameno: ", game.gameno);
-    if (!!gameint && gameint.length < 7 && !!gameint.match(/^\d+$/)){
+    var gameint = prompt(audit+"\n\nPlease enter gameno: ", game.gameno);
+    if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
       if (gameint > 0){
         game = layout(gameint);
@@ -563,6 +584,7 @@ function addEvents(){
         stack.list = [];
         setSolved(false);
         setupLayout();
+        audit = "";
     } }
     $this.css({left: "-=1", top: "-=2"});
     break;
@@ -582,7 +604,14 @@ function addEvents(){
     }
     if ($this.css('backgroundPosition') == "30% 87.5%") break;
 
-    xhrrequest(message('~'), true);
+    if (xhrconnect)
+      xhrrequest(message('~'), true);
+    else if (webworker){
+      busy = true;
+      $this.css({left: "+=1", top: "+=2"});
+      $this.css("background-position", "35% 87.5%");
+      solver.postMessage(stack.tableau);
+    }
     break;
 
    case 7: // help
@@ -623,7 +652,7 @@ function xhrrequest(msg, flag){
           setSolved(false);
         }
       } else {
-        $('.icon').eq(6).css("background-position", "30% 87.5%");
+        if (!webworker) $('.icon').eq(6).css("background-position", "30% 87.5%");
         xhrconnect = false;
       }
       busy = false;
@@ -642,10 +671,10 @@ function xhrrequest(msg, flag){
     try {
       xmlhttp.send();
     } catch(err) {
-      icon.css("background-position", "30% 87.5%");
+      if (!webworker) icon.css("background-position", "30% 87.5%");
       xhrconnect = false;
   } } else {
-    icon.css("background-position", "30% 87.5%");
+    if (!webworker) icon.css("background-position", "30% 87.5%");
     xhrconnect = false;
 } }
 
