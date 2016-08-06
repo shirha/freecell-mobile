@@ -75,7 +75,6 @@ public class Solver {
 	private int cnt;
 	private int lvl;
 
-	private final int MAXDEPTH = 50;
 	private int MAXSTATS;
 	private Stats stats;
 	private Logger logger;
