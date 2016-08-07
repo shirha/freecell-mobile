@@ -8,9 +8,7 @@ self.addEventListener('message', function(e) {  // todo: Tableau class
   position = nextstack = nextkeys = null;
 }, false);
 
-var MAXCOLS = 8, MAXROWS = 20, HOMEOFFSET = 4, MAXDEPTH = 50, MAXNODES = 2000, MAXSCORE = 64+8+6*8*2,
-  position = Object.create(null), size = depth = found = 0,
-
+var MAXCOLS = 8, MAXROWS = 20, HOMEOFFSET = 4, MAXDEPTH = 50, MAXNODES = 2000, MAXSCORE = 64+8+6*8*2, position, depth, found, 
   rank = function (r){ return r      & 15 }, 
   suit = function (s){ return s >> 4 &  3 },
   isKings = function (tableau){ for (var f=!0, c=4; 8>c; c++) if (13 !== rank(tableau[c][0])){ f=!1; break; } return f; },
@@ -73,7 +71,8 @@ function m (tableau){
 } 
 
 function solve (e){
-  var tableau = [], stack = [], lvl = 0,
+  position = Object.create(null), depth = found = 0;
+  var tableau = [], stack = [], lvl = size = 0,
     init = function (){
       nextstack = [], nextkeys = Object.create(null), stats = zeroArray(MAXSCORE), loscore = midscore = MAXSCORE-2, hiscore = totscore = cnt = 0; 
     },
