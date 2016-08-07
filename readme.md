@@ -21,6 +21,6 @@ Chrome does not allow web workers from the local file system with out starting c
 
 -
 
-build the target jar file with `mvn clean install'
+build the target jar file with `mvn clean install' or export > java > runnable jar > with Main class: org.games.solitaire.Jetty
 
 
