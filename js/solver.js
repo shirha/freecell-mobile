@@ -89,7 +89,6 @@ function solve (e){
     for (var r = 0; r < MAXROWS; r++) {
       tableau[c][r] = e.data[c][r].rank === 0 ? 0 : e.data[c][r].rank + e.data[c][r].suit * 16 + 64;
   } } 
-  tableau = test(); 
   console.log( m(tableau) );
   
   init(), cnt++;
