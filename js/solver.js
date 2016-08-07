@@ -71,7 +71,7 @@ function m (tableau){
 } 
 
 function solve (e){
-  position = Object.create(null), depth = found = 0;
+  position = Object.create(null), depth = found = 0, result = [], scores = []; 
   var tableau = [], stack = [], lvl = size = 0,
     init = function (){
       nextstack = [], nextkeys = Object.create(null), stats = zeroArray(MAXSCORE), loscore = midscore = MAXSCORE-2, hiscore = totscore = cnt = 0; 
@@ -156,7 +156,7 @@ function search (tableau) {
     undo(tableau, nodelist[i]);
 } }
 
-var result = [], scores = []; 
+var result, scores; 
 function backtrack (entry){
   while (true) {
     scores.push(entry.value.score);
