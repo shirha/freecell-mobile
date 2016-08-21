@@ -69,6 +69,11 @@ function setupLayout(){
 
     xhrrequest("~", false); // ping the server
 
+    if (screen.width < 895.5) {
+      $('meta[name=viewport]').attr('content','width=device-width, initial-scale='+(screen.width/895.5))
+    }
+    //alert($('meta[name=viewport]').attr('content'));
+ 
     if (!!navigator.userAgent.match(/Android/)){ // works for Nexus 7
       var childheight = $('.container').width() * 
         (Math.max(window.screen.availWidth,window.screen.availHeight) - 74) / 
@@ -142,7 +147,7 @@ var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true
 
 function layout(){
   var shuffle = function (demo) {
-    var seed = demo || Math.floor(Math.random() * 1000000), 
+    var seed = demo || Math.floor(Math.random() * 1000000000), 
       gameno = seed, 
       deck = [],
       i    = 52,
@@ -159,6 +164,7 @@ function layout(){
     }
     deck = deck.reverse();
     console.log("gameno: " + gameno);
+    audit = "";
     return {
       deck: deck, 
       gameno: gameno
@@ -575,7 +581,7 @@ function addEvents(){
 
    case 4: // play
     $this.css({left: "+=1", top: "+=2"});
-    var gameint = prompt(audit+"\n\nPlease enter gameno: ", game.gameno);
+    var gameint = prompt($('meta[name=viewport]').attr('content')+"\n"+audit+"\n\nPlease enter gameno: ", game.gameno);
     if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
       if (gameint > 0){
