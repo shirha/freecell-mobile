@@ -540,7 +540,7 @@ function addEvents(){
       $this.css({left: "-=1", top: "-=2"}); 
       // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
       // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment next line
-      $('body').css('background-image', 'url("i/nexus' + nexus++ % 10 + '.jpg")');
+      if(!isMobile){ $('body').css('background-image', 'url("i/nexus' + nexus++ % 10 + '.jpg")'); }
       game = layout();
       stack.nodelist = [];
       stack.list = [];
