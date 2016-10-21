@@ -45,8 +45,7 @@ $(document).ready(function (){
 
 function setupLayout(){
   if (firsttime){
-    firsttime = false; 
-
+    firsttime = false;
     try {
       solver = new Worker('js/solver.js');
       solver.addEventListener('message', function(e) {
@@ -56,6 +55,8 @@ function setupLayout(){
           setSolved(true);
         }else{
           setSolved(false);
+          $('.icon').eq(7).css("background-position", "40% 75%");
+          setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
         }
           //console.log(e.data);
         audit = e.data.audit;
@@ -66,7 +67,6 @@ function setupLayout(){
     } catch (e){
       webworker = false;
     }
-
     xhrrequest("~", false); // ping the server
 
     if (screen.width < 895.5) {
@@ -191,7 +191,7 @@ function layout(){
                         fj, fk, fx, fy, deck) {
     for (var sliceArr = [], i = 0, bpx = 0, bpy = 0; n > i; i++) {
       var j = fj(i),
-        k = fk(i, j);
+          k = fk(i, j);
       switch (cls) {
         case "icon":
           bpx = 5 * i, bpy = 75;
@@ -580,8 +580,8 @@ function addEvents(){
     break;
 
    case 4: // play
-    $this.css({left: "+=1", top: "+=2"});
-    var gameint = prompt($('meta[name=viewport]').attr('content')+"\n"+audit+"\n\nPlease enter gameno: ", game.gameno);
+    $this.css({left: "+=1", top: "+=2"}); // $('meta[name=viewport]').attr('content')+"\n"+
+    var gameint = prompt(audit+"\n\nPlease enter gameno: ", game.gameno);
     if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
       if (gameint > 0){
@@ -656,7 +656,10 @@ function xhrrequest(msg, flag){
           setSolved(true);
         } else {
           setSolved(false);
-        }
+          if (flag){
+            $('.icon').eq(7).css("background-position", "40% 75%");
+            setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
+        } }
       } else {
         if (!webworker) $('.icon').eq(6).css("background-position", "30% 87.5%");
         xhrconnect = false;
