@@ -76,8 +76,8 @@ function setupLayout(){
  
     if (!!navigator.userAgent.match(/Android/)){ // works for Nexus 7
       var childheight = $('.container').width() * 
-        (Math.max(window.screen.availWidth,window.screen.availHeight) - 74) / 
-         Math.min(window.screen.availWidth,window.screen.availHeight);
+        (Math.max(screen.availWidth,screen.availHeight) - 74) / 
+         Math.min(screen.availWidth,screen.availHeight);
       $('.container').css('height', childheight);
   } }
 
@@ -118,7 +118,7 @@ function gray(){
 
 var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, solver, webworker = true, audit = "", nexus = 0,
   isMobile = !!("ontouchstart" in window), 
-  offset_height = isMobile ? 69 : 50,
+  deltaHeight = isMobile ? 69 : 50,
   isSolved = false,
   setSolved = function (flag){
     (isSolved = arguments.length > 0 ? flag : isSolved) ?
@@ -170,60 +170,43 @@ function layout(){
       gameno: gameno
     };
   },
-  fy = function(i, deck) {
-    if ("undefined" == typeof deck) return 0;
-    var y = deck[i] % 4; // swap D & C
-    return 0 === y ? 1 : 1 == y ? 0 : y;
+  card = shuffle(arguments[0]),
+
+  fx = function(i) {
+    return Math.floor(card.deck[i] / 4);
   },
-  fx = function(i, deck) {
-    return "undefined" == typeof deck ? i : Math.floor(deck[i] / 4);
-  },
-  fj = function(i) {
-    return Math.floor(i / 8);
-  },
-  fk = function(i, j) {
-    return i - 8 * j;
+  fy = function(i) {
+    var y = card.deck[i] % 4; // swap D & C
+    return y === 0 ? 1 : y === 1 ? 0 : y;
   },
   f0 = function() {
     return 0;
   },
-  createDivs = function(cls, n, ofsleft, ofsheight, imgpad, imgwidth, imgheight,
-                        fj, fk, fx, fy, deck) {
-    for (var sliceArr = [], i = 0, bpx = 0, bpy = 0; n > i; i++) {
-      var j = fj(i),
-          k = fk(i, j);
-      switch (cls) {
-        case "icon":
-          bpx = 5 * i, bpy = 75;
-          break;
-        case "img freecell":
-          bpx = 65, bpy = 80;
-          break;
-        case "img homecell":
-          bpx = 65, bpy = 20 * i;
-          break;
-        case "img cascades":
-          bpx = 65, bpy = 80;
-          break;
-        case "img deck":
-          bpx = 5 * fx(i, deck), bpy = 20 * fy(i, deck);
-      }
+  ft = function(i) {
+    return Math.floor(i / 8);
+  },
+  fl = function(i, j) {
+    return i - j * 8;
+  },
+  createDivs = function(cls, n, ofsLeft, ofsTop, imgWidth, imgHeight, ft, fl, bpx, bpy){ 
+    for (var sliceArr = [], i = 0; i < n; i++) {
+      var t = ft(i),
+          l = fl(i, t);
       sliceArr.push('<div class="' + cls + 
-        '" style="background-position: ' + bpx + "% " + bpy + "%; "+
-        "left: " + (ofsleft + k * (imgwidth + imgpad)) + "px; "+
-        "top: " + (ofsheight + j * imgheight) + 'px; "></div>');
+        '" style="background-position: ' + bpx(i) + '% ' + bpy(i) + '%; '+
+        'top: '  + (ofsTop  + t * imgHeight) + 'px; '+
+        'left: ' + (ofsLeft + l * imgWidth ) + 'px; "></div>');
     }
     return sliceArr.join("");
   },
-  card   = shuffle(arguments[0]),
-  divstr = createDivs("icon",  8,  10,  10, 10, 100,  0, fj, fk, fx, fy)+
-    createDivs("img freecell", 4,  10, 120, 10, 100,  0, fj, fk)+
-    createDivs("img homecell", 4, 450, 120, 10, 100,  0, fj, fk, fx, fy)+
-    createDivs("img cascades", 8,  10, 280, 10, 100,  0, fj, fk)+
-    createDivs("img deck",    52,   0,   0, 10, 100, offset_height, 
-               fj, f0, fx, fy, card.deck)+
+  divstr = createDivs("icon",  8,  10,  10, 110, 0, ft, fl, function (i) {return 5 * i}, function (i) {return 75})+
+    createDivs("img freecell", 4,  10, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
+    createDivs("img homecell", 4, 450, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 20 * i})+
+    createDivs("img cascades", 8,  10, 280, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
+    createDivs("img deck",    52,   0,   0, 110,  
+                                       deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+
     '<div class="bus"  style="display: none"></div>';
-      // create bus last for z-index !
+    // create bus last for z-index !
 
   return $.extend(card, {layout: divstr}); // also deck:, gameno:
 }
@@ -384,6 +367,7 @@ function removehilight (extra){
   $('.img').removeClass('hilite-yellow hilite-auto hilite-orange '+extra); 
 }
 
+// destination selection ...
 function dstselectFree(element) {
   var dstparent = $('.freecell:empty:first');
   if (dstparent.length==4 ||
@@ -391,7 +375,7 @@ function dstselectFree(element) {
     removehilight('hilite-blue');
   } else {
     var src_col = (element.parent().offset().left - 10) / 110,
-        src_row =  element.last().position().top / offset_height,
+        src_row =  element.last().position().top / deltaHeight,
         dst_col = (dstparent.offset().left - 10) / 110,
         node = [];
     node.push([src_col, src_row+1, dst_col, 0, 'cf']);
@@ -406,7 +390,7 @@ function dstselectHome(element) {
   dstparent = $('.homecell').eq(src.suit);
   if(dstparent.children().length == src.rank-1){
     var src_col = (element.parent().offset().left - 10) / 110,
-        src_row =  element.last().position().top / offset_height,
+        src_row =  element.last().position().top / deltaHeight,
         node = [];
     if(element.parent().hasClass('freecell')){
       node.push([src_col, src_row, src.suit+4, 0, 'fh']);
@@ -426,11 +410,11 @@ function dstselectCasc(element, $this) {
     dstofstop  = 0;
   } else {
     dstparent  = $this.parent();
-    dstofstop  =  dstparent.children().last().position().top + offset_height;
+    dstofstop  =  dstparent.children().last().position().top + deltaHeight;
   }
   var src_col = (element.parent().offset().left - 10) / 110,
       dst_col = (dstparent.offset().left - 10) / 110,
-      dst_row = dstofstop / offset_height,
+      dst_row = dstofstop / deltaHeight,
       src_row = element.parent().children().length - 
                (element.parent().hasClass('freecell') ? 1 : 0),
       src     = stack.tableau[src_col][src_row].toString(),
@@ -456,7 +440,7 @@ function dstselectCasc(element, $this) {
 
     element = $('.hilite-blue');
     setTimeout(function (){$('.deck').removeClass('hilite-purple');}, 2500);
-    src_row = element.first().position().top / offset_height;
+    src_row = element.first().position().top / deltaHeight;
 
     var node = [], i;
     if(element.parent().hasClass('freecell')){
@@ -487,6 +471,7 @@ function addEvents(){
   for (var i=0; i < 7; i++) $('.icon').eq(i).attr('title', tooltip[i]);
 
   $('.deck, .freecell, .homecell, .cascades').on('click', function(){
+    if (busy) return false;
     var $this = $(this);
 
   // was a hilite-blue cascade column clicked? toggle off
@@ -510,7 +495,6 @@ function addEvents(){
         } else {}
       } else {}
     } else {
-      if (busy) return false;
       var element = $('.hilite-blue'); 
 
       if ($this.hasClass('freecell') ||
@@ -540,7 +524,7 @@ function addEvents(){
       $this.css({left: "-=1", top: "-=2"}); 
       // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
       // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment next line
-      if(!isMobile){ $('body').css('background-image', 'url("i/nexus' + nexus++ % 10 + '.jpg")'); }
+      if(!isMobile){ $('body').css('background-image', 'url("i/nexus' + nexus++ % 11 + '.jpg")'); }
       game = layout();
       stack.nodelist = [];
       stack.list = [];
@@ -579,7 +563,7 @@ function addEvents(){
     }
     break;
 
-   case 4: // play
+   case 4: // info
     $this.css({left: "+=1", top: "+=2"}); // $('meta[name=viewport]').attr('content')+"\n"+
     var gameint = prompt(audit+"\n\nPlease enter gameno: ", game.gameno);
     if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
@@ -621,7 +605,7 @@ function addEvents(){
     break;
 
    case 7: // help
-    window.location = "instructions.html";
+    location = "instructions.html";
   }
   return false;
  });
@@ -671,7 +655,7 @@ function xhrrequest(msg, flag){
   } } };
 
   stack.hist.push("HTTP:");
-  var host = window.location.href;
+  var host = location.href;
   host = host.replace(/8080\/.+/, "8080/");
   if (host.match(/^http:/)) {
     xmlhttp.open("GET", host + "dynamic/solve/" + msg, true);
@@ -717,10 +701,11 @@ function beginFactory (ids){
     var src = $(ids);
     $('.bus').toggle().css({top: src.offset().top, left: src.offset().left});
     var ytop = 0;
-    $('.bus').append(src).children().each( function (){ 
-      $( this ).css({top: ytop});
-      ytop+=offset_height;
-    });
+    $('.bus').append(src).children()
+      .each( function (){ 
+        $( this ).css({top: ytop});
+        ytop+=deltaHeight;
+      });
   }
   return begin;
 }
@@ -732,7 +717,7 @@ function completeFactory (dstparent, ytop, done, first, hilite){
     dstparent.append( $('.bus').toggle().children()
       .each( function (){
         $(this).css({top: ytop, left: 0}); // this==dst
-        ytop+=offset_height;
+        ytop+=deltaHeight;
       })
     );
     if (done) gray();
@@ -748,10 +733,10 @@ function playAll (q){
     },
     result = {
       e: $('.bus'),
-      p: {top: p.dst.offset().top + p.top * offset_height, left: p.dst.offset().left},      
+      p: {top: p.dst.offset().top + p.top * deltaHeight, left: p.dst.offset().left},      
       o: {duration: speed(p, q),
         begin: beginFactory( p.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
-        complete: completeFactory(p.dst, p.top * offset_height, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
+        complete: completeFactory(p.dst, p.top * deltaHeight, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
     } };
 
   q.entry.forEach(function (move) {
@@ -779,7 +764,7 @@ function Play (entry){
     }),
     src_col = entry[0][0], src_row = entry[0][1], 
     dst_col = entry[0][2], dst_row = entry[0][3],
-    dy = (src_row ? -280 - (src_row-1) * offset_height : -120),
+    dy = (src_row ? -280 - (src_row-1) * deltaHeight : -120),
     dstparent;
 
   if (dst_row === 0){
@@ -790,7 +775,7 @@ function Play (entry){
     }
     dy += 120; 
   } else {
-    dy += 280 + (dst_row-1) * offset_height;
+    dy += 280 + (dst_row-1) * deltaHeight;
     dst_row--;
     dstparent = $('.cascades').eq(dst_col);
   }
