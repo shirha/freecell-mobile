@@ -39,61 +39,59 @@
  *
  * */
 
-$(document).ready(function (){ 
-  setupLayout();
-});
+String.prototype.format = function () {
+  var args = arguments;
+  return this.replace(/\{(\d+)\}/g, function (m, n) { return args[n]; });
+};
 
-function setupLayout(){
-  if (firsttime){
-    firsttime = false;
+$(document).ready(function (){ 
     try {
-      solver = new Worker('js/solver.js');
-      solver.addEventListener('message', function(e) {
+      go.solver = new Worker('js/solver.js');
+      go.solver.addEventListener('message', function(e) {
         if (e.data.result.length>0){
           stack.trimLists();
           stack.list = stack.list.concat(e.data.result);
-          setSolved(true);
+          go.setSolved(true);
         }else{
-          setSolved(false);
+          go.setSolved(false);
           $('.icon').eq(7).css("background-position", "40% 75%");
           setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
         }
-          //console.log(e.data);
-        audit = e.data.audit;
+        go.audit = e.data.audit;
         setTimeout(function (){$('.icon').eq(6).css({left: "-=1", top: "-=2"});},100); 
-        busy = false;
+        go.isBusy = false;
         hint();
       }, false);
     } catch (e){
-      webworker = false;
+      go.webworker = false;
     }
     xhrrequest("~", false); // ping the server
 
     if (screen.width < 895.5) {
       $('meta[name=viewport]').attr('content','width=device-width, initial-scale='+(screen.width/895.5))
     }
-    //alert($('meta[name=viewport]').attr('content'));
  
     if (!!navigator.userAgent.match(/Android/)){ // works for Nexus 7
       var childheight = $('.container').width() * 
         (Math.max(screen.availWidth,screen.availHeight) - 74) / 
          Math.min(screen.availWidth,screen.availHeight);
       $('.container').css('height', childheight);
-  } }
+  }
+  go.game = layout();
+  setupLayout();
+});
 
-  $('.container').html( game.layout );
+function setupLayout(){
+  $('.container').html( go.game.layout );
   addEvents();  // game, list & nodelist init'd at page load & new game
-  stack.index = 0, stack.hist = [], stack.initTableau(), slow = NORMAL;
-  setSolved(); // need to reset 'i' button
-
+  stack.index = 0, stack.hist = [], stack.tableauInit(), go.slow = go.NORMAL;
+  go.setSolved(); // need to reset solve button
   gray();
   hint();
 }
 
-
-
 function hint(){
-  if(stack.isEof() || !isSolved){
+  if(stack.isEof() || !go.isSolved){
     $('.hint').hide();
   } else {
     $('.hint').show();
@@ -104,46 +102,17 @@ function hint(){
   $('.icon').eq(3).css("background-position", 
     stack.isEof() ? "15% 87.5%" : "15% 75%");
 
-  $('.icon').eq(7).attr('title', "#" + game.gameno + " - click for help");
+  $('.icon').eq(7).attr('title', "#" + go.game.gameno + " - click for help");
 }
 
 function gray(){
   $( [0, 1, 2, 3]
-    .map(function(i) {return [$('.homecell').eq(i).children().length + 1, i];})
-    .filter(function(r) {return r[0]<14;})
-    .map(function(c) {var s = new Card(c[0], c[1]); return "#" + s;})
+    .map(function (i) {return [$('.homecell').eq(i).children().length + 1, i];})
+    .filter(function (r) {return r[0] < 14;})
+    .map(function (c) {return "#" + new Card(c[0],c[1]);})
     .join(", ")
    ).addClass('hilite-next');
 }
-
-var busy = false, NORMAL = 4, slow = NORMAL, firsttime = true, xhrconnect = true, solver, webworker = true, audit = "", nexus = 0,
-  isMobile = !!("ontouchstart" in window), 
-  deltaHeight = isMobile ? 69 : 50,
-  isSolved = false,
-  setSolved = function (flag){
-    (isSolved = arguments.length > 0 ? flag : isSolved) ?
-      $('.icon').eq(6).css("background-position", "30% 100%") :
-    !(xhrconnect||webworker) ?
-      $('.icon').eq(6).css("background-position", "30% 87.5%") :
-      $('.icon').eq(6).css("background-position", "30% 75%"  );
-  },
-  setSpeed = function (){
-    if (slow == NORMAL) {
-      slow = 1;
-      $('.icon').eq(5).css("background-position", "25% 87.5%");
-    } else if (slow ==1){
-      slow = 16;
-      $('.icon').eq(5).css("background-position", "25% 100%");
-    } else {
-      slow = NORMAL;
-      $('.icon').eq(5).css("background-position", "25% 75%");
-    }
-  },
-  tooltip = ['new game','reset game','prev','next','play','speed','solve','hint'],
-  dump = function () { 
-    return JSON.stringify($.extend(stack,{gameno: game.gameno}));
-  },
-  game = layout();
 
 function layout(){
   var shuffle = function (demo) {
@@ -164,10 +133,11 @@ function layout(){
     }
     deck = deck.reverse();
     console.log("gameno: " + gameno);
-    audit = "";
+    go.audit = "";
     return {
       deck: deck, 
-      gameno: gameno
+      gameno: gameno,
+      layout: null     // set below !
     };
   },
   card = shuffle(arguments[0]),
@@ -189,85 +159,26 @@ function layout(){
     return i - j * 8;
   },
   createDivs = function(cls, n, ofsLeft, ofsTop, imgWidth, imgHeight, ft, fl, bpx, bpy){ 
-    for (var sliceArr = [], i = 0; i < n; i++) {
-      var t = ft(i),
-          l = fl(i, t);
-      sliceArr.push('<div class="' + cls + 
-        '" style="background-position: ' + bpx(i) + '% ' + bpy(i) + '%; '+
-        'top: '  + (ofsTop  + t * imgHeight) + 'px; '+
-        'left: ' + (ofsLeft + l * imgWidth ) + 'px; "></div>');
+    for (var arrayDivs = [], i = 0; i < n; i++) {
+      var y = ft(i), top = ofsTop  + y * imgHeight, x = fl(i, y), left = ofsLeft + x * imgWidth;
+      arrayDivs.push( go.template.format(cls, bpx(i), bpy(i), top, left) );
     }
-    return sliceArr.join("");
-  },
-  divstr = createDivs("icon",  8,  10,  10, 110, 0, ft, fl, function (i) {return 5 * i}, function (i) {return 75})+
+    return arrayDivs.join("");
+  };
+
+  card.layout = createDivs("icon",  8,  10,  10, 110, 0, ft, fl, function (i) {return 5 * i}, function (i) {return 75})+
     createDivs("img freecell", 4,  10, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
     createDivs("img homecell", 4, 450, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 20 * i})+
     createDivs("img cascades", 8,  10, 280, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
     createDivs("img deck",    52,   0,   0, 110,  
-                                       deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+
+                                    go.deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+
     '<div class="bus"  style="display: none"></div>';
     // create bus last for z-index !
 
-  return $.extend(card, {layout: divstr}); // also deck:, gameno:
+  return card;
 }
 
-var stack = {
-  move: function () {return nodeString(this.tableau, this.list[this.index][0]);},
-  list: [],         // init @ page load && new game
-  nodelist: [],     // init @ page load && new game
-  index: 0,         // init @ setup
-  hist: [],         // init @ setup
-  tableau: [],      // init @ setup
-  trimLists: function (){
-    while (this.list.length > this.index) this.list.pop();
-    while (this.nodelist.length > this.index+1) this.nodelist.pop();
-  },
-  add: function (entry){
-    if (this.list.length == this.index){
-      this.list.push(entry);
-      this.hist.push("add: "+ this.move());
-      this.index++;
-    } else {
-      this.hist.push("add: "+ this.move());
-      if (JSON.stringify(entry) != JSON.stringify(this.list[this.index])  ){
-        this.trimLists();
-        this.list.push(entry); 
-        this.index++;
-        setSolved(false);
-      } else {
-        this.index++;  
-  } } }, // get makes a copy for destructive undo & redo
-  get:   function (){ return $.extend(true, [], this.list[this.index-1]); }, 
-  isEob: function (){ return this.index < 1; },
-  isEof: function (){ return this.list.length == this.index; },
-  isKings: function (){
-    for(var f=!0,c=4;8>c;c++)if(13!=this.tableau[c][0].rank){f=!1;break;}return f;},
-  dec:   function (){ 
-    this.index--; 
-    this.hist.push("dec: "+ this.move()); 
-  },
-  inc:   function (){ 
-    this.hist.push("inc: "+ this.move()); 
-    this.index++; 
-  },
-  initTableau: function (){
-    for (var i = 0; i < 8; i++){
-      this.tableau[i] = [];
-      this.tableau[i][0] = new Card(); 
-      var src = $('.cascades').eq(i).children();
-      for (var j = 0; j < 19; j++){
-        this.tableau[i][j + 1] = new Card(j < src.length ? src.eq(j) : undefined);
-  } } },
-  playTableau: function(move) {
-    var src = this.tableau[move[0]][move[1]];
-    this.tableau[move[2]][move[3]] = src;
-    move[1] === 0 && move[0] >= 4 && src.rank > 1 ? 
-      this.tableau[move[0]][move[1]] = new Card(src.rank - 1, src.suit) : 
-      this.tableau[move[0]][move[1]] = new Card();
-  }
-};
-
-var Card = function (src){
+function Card (src){
   if (src === undefined){
     this.rank = 0;
     this.suit = 4;
@@ -288,17 +199,17 @@ Card.prototype = {
   }
 };
 
-function inSequence (bot_card, top_card){
-  var src = new Card(bot_card);
-  var dst = new Card(top_card);
-  return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1; 
-}  
-
 function nodeSequence (tableau, node){
   var src = tableau[node[0]][node[1]],
       dst = tableau[node[2]][node[3]-1];
   return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1;
 }
+
+function inSequence (bot_card, top_card){
+  var src = new Card(bot_card);
+  var dst = new Card(top_card);
+  return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1; 
+}  
 
 function nodeString (tableau, node){
   var src = tableau[node[0]][node[1]].toString(),
@@ -311,21 +222,22 @@ function nodeString (tableau, node){
 // if solved is also true and you choose the same selection,
 // hilite-orange destination card and hilite-autoplay also
 
-function checkAvailable(){ var node, src;
+function checkAvailable(){ 
+  var node, src, hilite, i;
   removehilight('hilite-purple'); 
-  var hilite = $('.hilite-blue').map(function(){
+  hilite = $('.hilite-blue').map(function(){
     return new Card($( this )).toString();
   }).toArray().join(",");
 
   if (stack.nodelist[stack.index] === undefined) 
     stack.nodelist[stack.index] = gen(stack.tableau);
-  for (var i = 0; i < stack.nodelist[stack.index].length; i++){
+  for (i = 0; i < stack.nodelist[stack.index].length; i++){
     node = stack.nodelist[stack.index][i][0];
     src  = new Card(source(node)).toString();
     if (hilite.match(src))
       addhilight(node,'hilite-yellow');
   }
-  if (isSolved){ 
+  if (go.isSolved){ 
     src = stack.list[stack.index].filter(function (node){
       return node[4].match(/^(?!a)/);}).map(function(node){
         return new Card(source(node));
@@ -375,7 +287,7 @@ function dstselectFree(element) {
     removehilight('hilite-blue');
   } else {
     var src_col = (element.parent().offset().left - 10) / 110,
-        src_row =  element.last().position().top / deltaHeight,
+        src_row =  element.last().position().top / go.deltaHeight,
         dst_col = (dstparent.offset().left - 10) / 110,
         node = [];
     node.push([src_col, src_row+1, dst_col, 0, 'cf']);
@@ -386,11 +298,11 @@ function dstselectFree(element) {
 }
 
 function dstselectHome(element) {
-  var src = new Card(element.last());
-  dstparent = $('.homecell').eq(src.suit);
+  var src = new Card(element.last()),
+      dstparent = $('.homecell').eq(src.suit);
   if(dstparent.children().length == src.rank-1){
     var src_col = (element.parent().offset().left - 10) / 110,
-        src_row =  element.last().position().top / deltaHeight,
+        src_row =  element.last().position().top / go.deltaHeight,
         node = [];
     if(element.parent().hasClass('freecell')){
       node.push([src_col, src_row, src.suit+4, 0, 'fh']);
@@ -410,11 +322,11 @@ function dstselectCasc(element, $this) {
     dstofstop  = 0;
   } else {
     dstparent  = $this.parent();
-    dstofstop  =  dstparent.children().last().position().top + deltaHeight;
+    dstofstop  =  dstparent.children().last().position().top + go.deltaHeight;
   }
   var src_col = (element.parent().offset().left - 10) / 110,
       dst_col = (dstparent.offset().left - 10) / 110,
-      dst_row = dstofstop / deltaHeight,
+      dst_row = dstofstop / go.deltaHeight,
       src_row = element.parent().children().length - 
                (element.parent().hasClass('freecell') ? 1 : 0),
       src     = stack.tableau[src_col][src_row].toString(),
@@ -440,7 +352,7 @@ function dstselectCasc(element, $this) {
 
     element = $('.hilite-blue');
     setTimeout(function (){$('.deck').removeClass('hilite-purple');}, 2500);
-    src_row = element.first().position().top / deltaHeight;
+    src_row = element.first().position().top / go.deltaHeight;
 
     var node = [], i;
     if(element.parent().hasClass('freecell')){
@@ -462,16 +374,17 @@ function dstselectCasc(element, $this) {
 } }
 
 function addEvents(){ 
-  var n = 0;  // store shuffled deck into the cascades
+
+  var n = 0, i;  // store shuffled deck into the cascades
   $('.deck').each(function (index, element){
     var card = $(element);
     card.attr('id', new Card(card).toString()); // used by beginFactory
     $('.cascades').eq(n++ % 8).append(card);
   });
-  for (var i=0; i < 7; i++) $('.icon').eq(i).attr('title', tooltip[i]);
+  for (i=0; i < 7; i++) $('.icon').eq(i).attr('title', go.tooltips[i]);
 
   $('.deck, .freecell, .homecell, .cascades').on('click', function(){
-    if (busy) return false;
+    if (go.isBusy) return false;
     var $this = $(this);
 
   // was a hilite-blue cascade column clicked? toggle off
@@ -486,8 +399,8 @@ function addEvents(){
           $this.addClass('hilite-blue');
           checkAvailable();
         } else if ($this.parent().hasClass('cascades')){
-          var child = $this.parent().children();
-          var index = child.length-1;
+          var child = $this.parent().children(),
+              index = child.length-1;
           while(index > $this.index() &&
              inSequence(child.eq(index), child.eq(index-1))) index--;
           child.slice( index ).addClass('hilite-blue');
@@ -514,7 +427,7 @@ function addEvents(){
 
   $('.icon').on('click', function(){
     var $this = $(this);
-    if (busy) return false;
+    if (go.isBusy) return false;
   switch ($this.index()){
 
    case 0: // new game
@@ -524,11 +437,11 @@ function addEvents(){
       $this.css({left: "-=1", top: "-=2"}); 
       // download your favorite images @ 2560x1600 from desktopnexus.com and rename to nexus[0-99].jpg
       // e.g. http://www.desktopnexus.com/search/dragonflies+maple+leaves/ - then uncomment next line
-      if(!isMobile){ $('body').css('background-image', 'url("i/nexus' + nexus++ % 11 + '.jpg")'); }
-      game = layout();
+      if(!go.isMobile){ $('body').css('background-image', 'url("i/nexus' + go.nexus++ % 11 + '.jpg")'); }
       stack.nodelist = [];
       stack.list = [];
-      setSolved(false);
+      go.setSolved(false);
+      go.game = layout();
       setupLayout();
     },100);
     break;
@@ -565,14 +478,14 @@ function addEvents(){
 
    case 4: // info
     $this.css({left: "+=1", top: "+=2"}); // $('meta[name=viewport]').attr('content')+"\n"+
-    var gameint = prompt(audit+"\n\nPlease enter gameno: ", game.gameno);
+    var gameint = prompt($('meta[name=viewport]').attr('content')+"\n\n"+go.audit+"\n\nPlease enter gameno: ", go.game.gameno);
     if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
       if (gameint > 0){
-        game = layout(gameint);
         stack.nodelist = [];
         stack.list = [];
-        setSolved(false);
+        go.setSolved(false);
+        go.game = layout(gameint);
         setupLayout();
         audit = "";
     } }
@@ -582,25 +495,25 @@ function addEvents(){
    case 5: // speed
     $this.css({left: "+=1", top: "+=2"});
     setTimeout(function (){$this.css({left: "-=1", top: "-=2"});},100);
-    setSpeed();
+    go.setSpeed();
     break;
 
    case 6: // solve
     removehilight('hilite-blue hilite-purple');
-    if (isSolved) {
-      setSolved(false);
+    if (go.isSolved) {
+      go.setSolved(false);
       hint();
       break;
     }
     if ($this.css('backgroundPosition') == "30% 87.5%") break;
 
-    if (xhrconnect)
+    if (go.xhrconnect)
       xhrrequest(message('~'), true);
-    else if (webworker){
-      busy = true;
+    else if (go.webworker){
+      go.isBusy = true;
       $this.css({left: "+=1", top: "+=2"});
       $this.css("background-position", "35% 87.5%");
-      solver.postMessage(stack.tableau);
+      go.solver.postMessage(stack.tableau);
     }
     break;
 
@@ -611,20 +524,18 @@ function addEvents(){
  });
 }
 
-function message(sep){
-  for (var msg = "", flag = true, r = 0; flag;){
-    r > 0 && (flag = false); // bottom row blank ok!
-    for (var c = 0; c < 8; c++){
-      var card = stack.tableau[c][r].toString();
-      card != "  " && (flag = true),  msg += card + " ";
-    } 
+function message(sep) {
+  var msg, flag, r, c, card;
+  for (msg = "", flag = true, r = 0; flag; ) {
+    r > 0 && (flag = false);
+    for (c = 0; c < 8; c++) card = stack.tableau[c][r].toString(), card != "  " && (flag = true), msg += card + " ";
     msg += sep, r++;
-  } 
+  }
   return msg;
 }
 
 function xhrrequest(msg, flag){
-  xhrconnect = true;
+  go.xhrconnect = true;
   var xmlhttp = new XMLHttpRequest(), 
     icon = $('.icon').eq(6);
   if (flag) icon.css({left: "+=1", top: "+=2"});
@@ -637,18 +548,18 @@ function xhrrequest(msg, flag){
           stack.trimLists();
           var result = resp.replace(/~/g, ",").replace(/([acefh]+)/g, '"$1"');
           stack.list = stack.list.concat(JSON.parse("["+result+"]"));
-          setSolved(true);
+          go.setSolved(true);
         } else {
-          setSolved(false);
+          go.setSolved(false);
           if (flag){
             $('.icon').eq(7).css("background-position", "40% 75%");
             setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
         } }
       } else {
-        if (!webworker) $('.icon').eq(6).css("background-position", "30% 87.5%");
-        xhrconnect = false;
+        if (!go.webworker) $('.icon').eq(6).css("background-position", "30% 87.5%");
+        go.xhrconnect = false;
       }
-      busy = false;
+      go.isBusy = false;
       if (flag) {
         setTimeout(function (){$('.icon').eq(6).css({left: "-=1", top: "-=2"});},100); 
         hint();
@@ -659,16 +570,16 @@ function xhrrequest(msg, flag){
   host = host.replace(/8080\/.+/, "8080/");
   if (host.match(/^http:/)) {
     xmlhttp.open("GET", host + "dynamic/solve/" + msg, true);
-    busy = true;
+    go.isBusy = true;
     if (flag) icon.css("background-position", "35% 87.5%");
     try {
       xmlhttp.send();
     } catch(err) {
-      if (!webworker) icon.css("background-position", "30% 87.5%");
-      xhrconnect = false;
+      if (!go.webworker) icon.css("background-position", "30% 87.5%");
+      go.xhrconnect = false;
   } } else {
-    if (!webworker) icon.css("background-position", "30% 87.5%");
-    xhrconnect = false;
+    if (!go.webworker) icon.css("background-position", "30% 87.5%");
+    go.xhrconnect = false;
 } }
 
 function undo (){
@@ -678,7 +589,7 @@ function undo (){
     seq.push(playAll({entry: [node.pop()], auto: true, frwd: false, done: false, first: first})); 
   seq.push(playAll({entry: node, auto: false, frwd: false, done: true, first: first}));
   //console.log(message('\n'));
-  busy = true;
+  go.isBusy = true;
   $.Velocity.RunSequence(seq);
 }
 
@@ -692,7 +603,7 @@ function redo (){
     seq.push(playAll({entry: [node.shift()], 
       auto: true, frwd: true, done: node.length ? false : true, first: first})); 
   //console.log(message('\n'));
-  busy = true;
+  go.isBusy = true;
   $.Velocity.RunSequence(seq);
 }
 
@@ -704,7 +615,7 @@ function beginFactory (ids){
     $('.bus').append(src).children()
       .each( function (){ 
         $( this ).css({top: ytop});
-        ytop+=deltaHeight;
+        ytop+=go.deltaHeight;
       });
   }
   return begin;
@@ -717,11 +628,11 @@ function completeFactory (dstparent, ytop, done, first, hilite){
     dstparent.append( $('.bus').toggle().children()
       .each( function (){
         $(this).css({top: ytop, left: 0}); // this==dst
-        ytop+=deltaHeight;
+        ytop+=go.deltaHeight;
       })
     );
     if (done) gray();
-    busy = !done;
+    go.isBusy = !done;
   }
   return complete;
 }
@@ -729,18 +640,18 @@ function completeFactory (dstparent, ytop, done, first, hilite){
 function playAll (q){
   var p = Play(q.entry),  // autoplay is twice as fast as redo & undo is twice as that !
     speed = function (p, q){ 
-      return p.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * slow * 0.2;
+      return p.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.slow * 0.2;
     },
     result = {
       e: $('.bus'),
-      p: {top: p.dst.offset().top + p.top * deltaHeight, left: p.dst.offset().left},      
+      p: {top: p.dst.offset().top + p.top * go.deltaHeight, left: p.dst.offset().left},      
       o: {duration: speed(p, q),
         begin: beginFactory( p.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
-        complete: completeFactory(p.dst, p.top * deltaHeight, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
+        complete: completeFactory(p.dst, p.top * go.deltaHeight, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
     } };
 
   q.entry.forEach(function (move) {
-    stack.playTableau(move);
+    stack.tableauPlay(move);
   });
 
   if (q.frwd){
@@ -752,7 +663,7 @@ function playAll (q){
         p.dst.children().last().addClass('hilite-orange') :
         p.dst.addClass('hilite-orange');
     }
-    if (stack.isKings()) setSolved(true);
+    if (stack.isKings()) go.setSolved(true);
   }
   q.first = false;
   return result;
@@ -764,8 +675,8 @@ function Play (entry){
     }),
     src_col = entry[0][0], src_row = entry[0][1], 
     dst_col = entry[0][2], dst_row = entry[0][3],
-    dy = (src_row ? -280 - (src_row-1) * deltaHeight : -120),
-    dstparent;
+    dy = (src_row ? -280 - (src_row-1) * go.deltaHeight : -120),
+    dstparent, dx;
 
   if (dst_row === 0){
     if (dst_col<4){
@@ -775,11 +686,11 @@ function Play (entry){
     }
     dy += 120; 
   } else {
-    dy += 280 + (dst_row-1) * deltaHeight;
+    dy += 280 + (dst_row-1) * go.deltaHeight;
     dst_row--;
     dstparent = $('.cascades').eq(dst_col);
   }
-  var dx = dstparent.offset().left - (10 + src_col * 110); // element.offset().left;
+  dx = dstparent.offset().left - (10 + src_col * 110); // element.offset().left;
   return {src: element, dst: dstparent, top: dst_row,
           delta: Math.floor(Math.sqrt(dx * dx + dy * dy))
 }; }
@@ -835,6 +746,7 @@ function autoplay (list){
 }    
 
 function gen(tableau){
+
   var node, c, r, j, k, x, y, src, nodelist = [], 
     z = [], ecount = 0, fcount = 0, eindex = -1, findex = -1;
 
@@ -891,3 +803,98 @@ function gen(tableau){
   } } } }
   return nodelist;
 }
+
+function dump() { 
+  return JSON.stringify($.extend(go,stack,{gameno: go.game.gameno}));
+} 
+
+var stack = {
+  move: function () {return nodeString(this.tableau, this.list[this.index][0]);},
+  list: [],         // init @ page load && new game
+  nodelist: [],     // init @ page load && new game
+  index: 0,         // init @ setup
+  hist: [],         // init @ setup
+  tableau: [],      // init @ setup
+  trimLists: function (){
+    while (this.list.length > this.index) this.list.pop();
+    while (this.nodelist.length > this.index+1) this.nodelist.pop();
+  },
+  add: function (entry){
+    if (this.list.length == this.index){
+      this.list.push(entry);
+      this.hist.push("add: "+ this.move());
+      this.index++;
+    } else {
+      this.hist.push("add: "+ this.move());
+      if (JSON.stringify(entry) != JSON.stringify(this.list[this.index])  ){
+        this.trimLists();
+        this.list.push(entry); 
+        this.index++;
+        go.setSolved(false);
+      } else {
+        this.index++;  
+  } } }, // get makes a copy for destructive undo & redo
+  get:   function (){ return $.extend(true, [], this.list[this.index-1]); }, 
+  isEob: function (){ return this.index < 1; },
+  isEof: function (){ return this.list.length == this.index; },
+  isKings: function (){
+    for(var f=!0,c=4;8>c;c++)if(13!=this.tableau[c][0].rank){f=!1;break;}return f;},
+  dec:   function (){ 
+    this.index--; 
+    this.hist.push("dec: "+ this.move()); 
+  },
+  inc:   function (){ 
+    this.hist.push("inc: "+ this.move()); 
+    this.index++; 
+  }
+}, go = { 
+  busy: false, NORMAL: 4, slow: this.NORMAL, xhrconnect: true, solver: null, webworker: true, audit: "", nexus: 0,
+  isMobile: !!("ontouchstart" in window), 
+  deltaHeight: this.isMobile ? 69 : 50,
+  template: '<div class="{0}" style="background-position: {1}% {2}%; top: {3}px; left: {4}px; "></div>',
+  tooltips: ['new game','reset game','prev','next','info','speed','solve','hint'],
+  isSolved: false,
+  
+  setSolved: function (flag){
+    (this.isSolved = arguments.length > 0 ? flag : this.isSolved) ?
+      $('.icon').eq(6).css("background-position", "30% 100%") :
+    !(this.xhrconnect||this.webworker) ?
+      $('.icon').eq(6).css("background-position", "30% 87.5%") :
+      $('.icon').eq(6).css("background-position", "30% 75%"  );
+  },
+  setSpeed: function (){ 
+    if (this.slow == this.NORMAL) {
+      this.slow = 1;
+      $('.icon').eq(5).css("background-position", "25% 87.5%");
+    } else if (this.slow ==1){
+      this.slow = 16;
+      $('.icon').eq(5).css("background-position", "25% 100%");
+    } else {
+      this.slow = this.NORMAL;
+      $('.icon').eq(5).css("background-position", "25% 75%");
+    }
+  }
+};
+
+// Uncaught DataCloneError: Failed to execute 'postMessage' 
+//   if stack.tableau.init and stack.tableau.play
+// the DataCloneError is from trying to pass an object with methods to postMessage
+// go.solver.postMessage(JSON.parse(JSON.stringify(stack.tableau))); works!
+
+stack.tableauInit = function (){
+  for (var i = 0; i < 8; i++){
+    stack.tableau[i] = [];
+    stack.tableau[i][0] = new Card(); 
+    var src = $('.cascades').eq(i).children();
+    for (var j = 0; j < 19; j++){
+      stack.tableau[i][j + 1] = new Card(j < src.length ? src.eq(j) : undefined);
+} } };
+
+stack.tableauPlay = function(move) {
+  var src = stack.tableau[move[0]][move[1]];
+  stack.tableau[move[2]][move[3]] = src;
+  move[1] === 0 && move[0] >= 4 && src.rank > 1 ? 
+    stack.tableau[move[0]][move[1]] = new Card(src.rank - 1, src.suit) : 
+    stack.tableau[move[0]][move[1]] = new Card();
+};
+
