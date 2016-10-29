@@ -55,7 +55,7 @@ $(document).ready(function (){
         }else{
           go.setSolved(false);
           $('.icon').eq(7).css("background-position", "40% 75%");
-          setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
+          setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2500); 
         }
         go.audit = e.data.audit;
         setTimeout(function (){$('.icon').eq(6).css({left: "-=1", top: "-=2"});},100); 
@@ -91,12 +91,15 @@ function setupLayout(){
 }
 
 function hint(){
+  // show/hide solved hint
   if(stack.isEof() || !go.isSolved){
     $('.hint').hide();
   } else {
     $('.hint').show();
     $('.hint').text( stack.move() );
   }
+
+  // enable/disable frwd/bkwd buttoms
   $('.icon').eq(2).css("background-position", 
     stack.isEob() ? "10% 87.5%" : "10% 75%");
   $('.icon').eq(3).css("background-position", 
@@ -106,6 +109,7 @@ function hint(){
 }
 
 function gray(){
+  // hilight gray next card to go home
   $( [0, 1, 2, 3]
     .map(function (i) {return [$('.homecell').eq(i).children().length + 1, i];})
     .filter(function (r) {return r[0] < 14;})
@@ -166,12 +170,12 @@ function layout(){
     return arrayDivs.join("");
   };
 
-  card.layout = createDivs("icon",  8,  10,  10, 110, 0, ft, fl, function (i) {return 5 * i}, function (i) {return 75})+
-    createDivs("img freecell", 4,  10, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
-    createDivs("img homecell", 4, 450, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 20 * i})+
-    createDivs("img cascades", 8,  10, 280, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+
+  card.layout = createDivs("icon",  8,  10,  10, 110, 0, ft, fl, function (i) {return 5 * i}, function (i) {return 75})+          //buttons
+    createDivs("img freecell", 4,  10, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+               //parent anchors
+    createDivs("img homecell", 4, 450, 120, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 20 * i})+           //parent anchors
+    createDivs("img cascades", 8,  10, 280, 110, 0, ft, fl, function (i) {return 65},    function (i) {return 80})+               //parent anchors
     createDivs("img deck",    52,   0,   0, 110,  
-                                    go.deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+
+                                    go.deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+  // children cards
     '<div class="bus"  style="display: none"></div>';
     // create bus last for z-index !
 
@@ -185,7 +189,7 @@ function Card (src){
   } else if (arguments.length==2) {
     this.rank = arguments[0];
     this.suit = arguments[1];
-  } else {
+  } else {                    //        <div class="img deck" style="background-position: 25% 60%; top: 250px; left: 0px;" id="6S"></div>
     var pos = src.css('backgroundPosition').match(/\d+/g);
     this.rank = pos[0] / 5 + 1;
     this.suit = pos[1] / 20;
@@ -199,19 +203,19 @@ Card.prototype = {
   }
 };
 
-function nodeSequence (tableau, node){
+function nodeSequence (tableau, node){ // used 4 times in gen()
   var src = tableau[node[0]][node[1]],
       dst = tableau[node[2]][node[3]-1];
   return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1;
 }
 
-function inSequence (bot_card, top_card){
+function inSequence (bot_card, top_card){ // used once in make-a-selection
   var src = new Card(bot_card);
   var dst = new Card(top_card);
   return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1; 
 }  
 
-function nodeString (tableau, node){
+function nodeString (tableau, node){ // used in stack.move to build hint
   var src = tableau[node[0]][node[1]].toString(),
       dst = node[3] > 1 ? tableau[node[2]][node[3]-1].toString() :
         node[3] == 1 ? 'e' : node[2] < 4 ? 'f' : 'h';
@@ -225,26 +229,27 @@ function nodeString (tableau, node){
 function checkAvailable(){ 
   var node, src, hilite, i;
   removehilight('hilite-purple'); 
-  hilite = $('.hilite-blue').map(function(){
+  hilite = $('.hilite-blue').map(function(){  // [div#6S.img.deck.hilite-blue, ...
     return new Card($( this )).toString();
-  }).toArray().join(",");
+  }).toArray().join(",");                     // "6S,5D,4C,3D"
 
   if (stack.nodelist[stack.index] === undefined) 
     stack.nodelist[stack.index] = gen(stack.tableau);
-  for (i = 0; i < stack.nodelist[stack.index].length; i++){
+  for (i = 0; i < stack.nodelist[stack.index].length; i++){  // check if in all possible moves (nodelist)
     node = stack.nodelist[stack.index][i][0];
     src  = new Card(source(node)).toString();
-    if (hilite.match(src))
+    if (hilite.match(src))         // src="3D",node=[5, 9, 1, 0, "cf"]; src = "6S",node=[5, 6, 6, 6, "cc"]
       addhilight(node,'hilite-yellow');
   }
   if (go.isSolved){ 
-    src = stack.list[stack.index].filter(function (node){
+    src = stack.list[stack.index].filter(function (node){  
       return node[4].match(/^(?!a)/);}).map(function(node){
         return new Card(source(node));
       }).join(",");
-    if (hilite === src){
+//  if (hilite === src){   
+    if (hilite.match(src)){              // check if hilite is same as solved (list)
       node = stack.list[stack.index][0];
-      addhilight(node,'hilite-orange'); // NOTE: already has hilite-yellow !
+      addhilight(node,'hilite-orange');  // NOTE: already has hilite-yellow !
       stack.list[stack.index].filter(function (node){
         return node[4].match(/^a/);
       }).forEach(function(node){
@@ -252,13 +257,13 @@ function checkAvailable(){
       });
 } } }
 
-function source (node){
+function source (node){ // used above to hilite-auto
   return node[1] === 0 ? 
     $('.freecell').eq(node[0]).children() : 
     $('.cascades').eq(node[0]).children().eq(node[1]-1);
 }
 
-function addhilight(node, color){
+function addhilight(node, color){         // add hilite to destination
   if (node[3] === 0){
     if(node[2]<4){
       $('.freecell').eq(node[2]).addClass(color);
@@ -275,11 +280,11 @@ function addhilight(node, color){
     $('.cascades').eq(node[2]).children().last().addClass(color);
 } }
 
-function removehilight (extra){ 
+function removehilight (extra){                     // remove hilite
   $('.img').removeClass('hilite-yellow hilite-auto hilite-orange '+extra); 
 }
 
-// destination selection ...
+// "destination selection ..."
 function dstselectFree(element) {
   var dstparent = $('.freecell:empty:first');
   if (dstparent.length==4 ||
@@ -392,7 +397,8 @@ function addEvents(){
         $this.parent().children().hasClass('hilite-blue')){
       removehilight('hilite-blue'); // hilite-purple');
 
-  // no hilite-blue cards? then hilite-blue excl. home
+  // "make a selection"
+  // no hilite-blue cards? then hilite-blue excl. home 
     } else if ($('.hilite-blue').length === 0){
       if ($this.hasClass('deck')){
         if ($this.parent().hasClass('freecell')){
@@ -410,6 +416,7 @@ function addEvents(){
     } else {
       var element = $('.hilite-blue'); 
 
+  // "choose destination"
       if ($this.hasClass('freecell') ||
           $this.parent().hasClass('freecell')){
         dstselectFree(element);
@@ -477,7 +484,7 @@ function addEvents(){
     break;
 
    case 4: // info
-    $this.css({left: "+=1", top: "+=2"}); // $('meta[name=viewport]').attr('content')+"\n"+
+    $this.css({left: "+=1", top: "+=2"});
     var gameint = prompt($('meta[name=viewport]').attr('content')+"\n\n"+go.audit+"\n\nPlease enter gameno: ", go.game.gameno);
     if (!!gameint && gameint.length < 10 && !!gameint.match(/^\d+$/)){
       gameint = parseInt(gameint, 10);
@@ -553,7 +560,7 @@ function xhrrequest(msg, flag){
           go.setSolved(false);
           if (flag){
             $('.icon').eq(7).css("background-position", "40% 75%");
-            setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2000); 
+            setTimeout(function (){$('.icon').eq(7).css("background-position", "35% 75%");},2500); 
         } }
       } else {
         if (!go.webworker) $('.icon').eq(6).css("background-position", "30% 87.5%");
@@ -804,20 +811,17 @@ function gen(tableau){
   return nodelist;
 }
 
-function dump() { 
-  return JSON.stringify($.extend(go,stack,{gameno: go.game.gameno}));
-} 
+function dump () { return JSON.stringify($.extend(go, stack)); } 
 
 var stack = {
-  move: function () {return nodeString(this.tableau, this.list[this.index][0]);},
-  list: [],         // init @ page load && new game
-  nodelist: [],     // init @ page load && new game
+  list: [],         // init @ page load && new game  -- used by redo, undo & solve
+  nodelist: [],     // init @ page load && new game  -- used to hilite, filled in by gen
   index: 0,         // init @ setup
   hist: [],         // init @ setup
-  tableau: [],      // init @ setup
+  tableau: [],      // init @ setup       -- setupLayout -> initTableau = new Card
   trimLists: function (){
     while (this.list.length > this.index) this.list.pop();
-    while (this.nodelist.length > this.index+1) this.nodelist.pop();
+    while (this.nodelist.length > this.index + 1) this.nodelist.pop();
   },
   add: function (entry){
     if (this.list.length == this.index){
@@ -834,7 +838,7 @@ var stack = {
       } else {
         this.index++;  
   } } }, // get makes a copy for destructive undo & redo
-  get:   function (){ return $.extend(true, [], this.list[this.index-1]); }, 
+  get:   function (){ return $.extend(true, [], this.list[this.index - 1]); }, 
   isEob: function (){ return this.index < 1; },
   isEof: function (){ return this.list.length == this.index; },
   isKings: function (){
@@ -846,9 +850,12 @@ var stack = {
   inc:   function (){ 
     this.hist.push("inc: "+ this.move()); 
     this.index++; 
+  },
+  move: function () {
+    return nodeString(this.tableau, this.list[this.index][0]);
   }
 }, go = { 
-  busy: false, NORMAL: 4, slow: this.NORMAL, xhrconnect: true, solver: null, webworker: true, audit: "", nexus: 0,
+  isBusy: false, NORMAL: 4, slow: this.NORMAL, xhrconnect: true, solver: null, webworker: true, audit: "", nexus: 0,
   isMobile: !!("ontouchstart" in window), 
   deltaHeight: this.isMobile ? 69 : 50,
   template: '<div class="{0}" style="background-position: {1}% {2}%; top: {3}px; left: {4}px; "></div>',
@@ -873,7 +880,7 @@ var stack = {
       this.slow = this.NORMAL;
       $('.icon').eq(5).css("background-position", "25% 75%");
     }
-  }
+  }, game: null
 };
 
 // Uncaught DataCloneError: Failed to execute 'postMessage' 
