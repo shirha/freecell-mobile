@@ -182,7 +182,7 @@ function layout(){
   return card;
 }
 
-function Card (src){
+function Card(src) {
   if (src === undefined){
     this.rank = 0;
     this.suit = 4;
@@ -203,19 +203,19 @@ Card.prototype = {
   }
 };
 
-function nodeSequence (tableau, node){ // used 4 times in gen()
-  var src = tableau[node[0]][node[1]],
-      dst = tableau[node[2]][node[3]-1];
-  return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1;
-}
-
-function inSequence (bot_card, top_card){ // used once in make-a-selection
+function inSequence(bot_card, top_card) { // used once in make-a-selection
   var src = new Card(bot_card);
   var dst = new Card(top_card);
   return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1; 
 }  
 
-function nodeString (tableau, node){ // used in stack.move to build hint
+function nodeSequence(tableau, node) { // used 4 times in gen()
+  var src = tableau[node[0]][node[1]],
+      dst = tableau[node[2]][node[3]-1];
+  return (src.suit & 1) != (dst.suit & 1) && dst.rank == src.rank+1;
+}
+
+function nodeString(tableau, node) { // used in stack.move to build hint
   var src = tableau[node[0]][node[1]].toString(),
       dst = node[3] > 1 ? tableau[node[2]][node[3]-1].toString() :
         node[3] == 1 ? 'e' : node[2] < 4 ? 'f' : 'h';
@@ -226,7 +226,7 @@ function nodeString (tableau, node){ // used in stack.move to build hint
 // if solved is also true and you choose the same selection,
 // hilite-orange destination card and hilite-autoplay also
 
-function checkAvailable(){ 
+function checkAvailable() { 
   var node, src, hilite, i;
   removehilight('hilite-purple'); 
   hilite = $('.hilite-blue').map(function(){  // [div#6S.img.deck.hilite-blue, ...
@@ -257,13 +257,13 @@ function checkAvailable(){
       });
 } } }
 
-function source (node){ // used above to hilite-auto
+function source(node) { // used above to hilite-auto
   return node[1] === 0 ? 
     $('.freecell').eq(node[0]).children() : 
     $('.cascades').eq(node[0]).children().eq(node[1]-1);
 }
 
-function addhilight(node, color){         // add hilite to destination
+function addhilight(node, color) {         // add hilite to destination
   if (node[3] === 0){
     if(node[2]<4){
       $('.freecell').eq(node[2]).addClass(color);
@@ -280,16 +280,16 @@ function addhilight(node, color){         // add hilite to destination
     $('.cascades').eq(node[2]).children().last().addClass(color);
 } }
 
-function removehilight (extra){                     // remove hilite
+function removehilight(extra) {                     // remove hilite
   $('.img').removeClass('hilite-yellow hilite-auto hilite-orange '+extra); 
 }
 
 // "destination selection ..."
 function dstselectFree(element) {
   var dstparent = $('.freecell:empty:first');
-  if (dstparent.length==4 ||
-      element.parent().hasClass('freecell')){
+  if (element.parent().hasClass('freecell')){
     removehilight('hilite-blue');
+  } else if (dstparent.length==0) { // do nothing
   } else {
     var src_col = (element.parent().offset().left - 10) / 110,
         src_row =  element.last().position().top / go.deltaHeight,
@@ -378,7 +378,7 @@ function dstselectCasc(element, $this) {
     redo();
 } }
 
-function addEvents(){ 
+function addEvents() { 
 
   var n = 0, i;  // store shuffled deck into the cascades
   $('.deck').each(function (index, element){
@@ -416,7 +416,7 @@ function addEvents(){
     } else {
       var element = $('.hilite-blue'); 
 
-  // "choose destination"
+  // "choose a destination"
       if ($this.hasClass('freecell') ||
           $this.parent().hasClass('freecell')){
         dstselectFree(element);
@@ -541,7 +541,7 @@ function message(sep) {
   return msg;
 }
 
-function xhrrequest(msg, flag){
+function xhrrequest(msg, flag) {
   go.xhrconnect = true;
   var xmlhttp = new XMLHttpRequest(), 
     icon = $('.icon').eq(6);
@@ -589,18 +589,19 @@ function xhrrequest(msg, flag){
     go.xhrconnect = false;
 } }
 
-function undo (){
+function undo () {
   var node = stack.get(), seq = [], first = true;
   node = node.map(function (a){return [a[2], a[3], a[0], a[1], a[4]];});
   while( node[node.length-1][4].match(/^a/) ) 
-    seq.push(playAll({entry: [node.pop()], auto: true, frwd: false, done: false, first: first})); 
+    seq.push(playAll({entry: [node.pop()], 
+      auto: true, frwd: false, done: false, first: first})); 
   seq.push(playAll({entry: node, auto: false, frwd: false, done: true, first: first}));
   //console.log(message('\n'));
   go.isBusy = true;
   $.Velocity.RunSequence(seq);
 }
 
-function redo (){
+function redo () {
   var node = stack.get(), seq = [], heap = [], first = true;
   while( node.length && node[0][4].match(/^(?!a)/) ) 
     heap.push(node.shift());
@@ -614,7 +615,7 @@ function redo (){
   $.Velocity.RunSequence(seq);
 }
 
-function beginFactory (ids){
+function beginFactory(ids) {
   function begin(){
     var src = $(ids);
     $('.bus').toggle().css({top: src.offset().top, left: src.offset().left});
@@ -628,7 +629,7 @@ function beginFactory (ids){
   return begin;
 }
 
-function completeFactory (dstparent, ytop, done, first, hilite){
+function completeFactory(dstparent, ytop, done, first, hilite) {
   function complete(){
     if (first) $('.img').removeClass('hilite-yellow hilite-orange hilite-next');
     $('.bus').children().removeClass(hilite);
@@ -644,7 +645,7 @@ function completeFactory (dstparent, ytop, done, first, hilite){
   return complete;
 }
 
-function playAll (q){
+function playAll(q) {
   var p = Play(q.entry),  // autoplay is twice as fast as redo & undo is twice as that !
     speed = function (p, q){ 
       return p.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.slow * 0.2;
@@ -676,7 +677,7 @@ function playAll (q){
   return result;
 }
 
-function Play (entry){
+function Play(entry) {
   var element = entry.map(function (move){
       return stack.tableau[move[0]][move[1]].toString();
     }),
@@ -702,7 +703,7 @@ function Play (entry){
           delta: Math.floor(Math.sqrt(dx * dx + dy * dy))
 }; }
 
-function autoplay (list){
+function autoplay(list) {
   var tableau = $.extend(true, [], stack.tableau),
     adjacentHomecells = function (src){
       return ((src.suit & 1) === 0 &&
@@ -752,7 +753,7 @@ function autoplay (list){
   return list;
 }    
 
-function gen(tableau){
+function gen(tableau) {
 
   var node, c, r, j, k, x, y, src, nodelist = [], 
     z = [], ecount = 0, fcount = 0, eindex = -1, findex = -1;
@@ -811,7 +812,7 @@ function gen(tableau){
   return nodelist;
 }
 
-function dump () { return JSON.stringify($.extend(go, stack)); } 
+function dump() { return JSON.stringify($.extend(go, stack)); } 
 
 var stack = {
   list: [],         // init @ page load && new game  -- used by redo, undo & solve
