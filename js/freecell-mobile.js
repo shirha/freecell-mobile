@@ -81,8 +81,7 @@ $(document).ready(function (){
   setupLayout();
 });
 
-function setupLayout(){
-  $('.container').html( go.game.layout );
+function setupLayout() {
   addEvents();  // game, list & nodelist init'd at page load & new game
   stack.index = 0, stack.hist = [], stack.tableauInit(), go.slow = go.NORMAL;
   go.setSolved(); // need to reset solve button
@@ -90,7 +89,7 @@ function setupLayout(){
   hint();
 }
 
-function hint(){
+function hint() {
   // show/hide solved hint
   if(stack.isEof() || !go.isSolved){
     $('.hint').hide();
@@ -108,7 +107,7 @@ function hint(){
   $('.icon').eq(7).attr('title', "#" + go.game.gameno + " - click for help");
 }
 
-function gray(){
+function gray() {
   // hilight gray next card to go home
   $( [0, 1, 2, 3]
     .map(function (i) {return [$('.homecell').eq(i).children().length + 1, i];})
@@ -118,7 +117,7 @@ function gray(){
    ).addClass('hilite-next');
 }
 
-function layout(){
+function layout() {
   var shuffle = function (demo) {
     var seed = demo || Math.floor(Math.random() * 1000000000), 
       gameno = seed, 
@@ -138,8 +137,9 @@ function layout(){
     deck = deck.reverse();
     console.log("gameno: " + gameno);
     go.audit = "";
+
     return {
-      deck: deck, 
+      deck: deck,
       gameno: gameno,
       layout: null     // set below !
     };
@@ -177,7 +177,7 @@ function layout(){
     createDivs("img deck",    52,   0,   0, 110,  
                                     go.deltaHeight, ft, f0, function (i) {return  5 * fx(i)}, function (i) {return 20 * fy(i)})+  // children cards
     '<div class="bus"  style="display: none"></div>';
-    // create bus last for z-index !
+    // create bus last for z-index !                                                                                        // velocity.js anchor
 
   return card;
 }
@@ -193,7 +193,8 @@ function Card(src) {
     var pos = src.css('backgroundPosition').match(/\d+/g);
     this.rank = pos[0] / 5 + 1;
     this.suit = pos[1] / 20;
-} };
+  } 
+}
 
 Card.prototype = { 
   asuit: new Array("D","C","H","S"," "),
@@ -234,19 +235,19 @@ function checkAvailable() {
   }).toArray().join(",");                     // "6S,5D,4C,3D"
 
   if (stack.nodelist[stack.index] === undefined) 
-    stack.nodelist[stack.index] = gen(stack.tableau);
-  for (i = 0; i < stack.nodelist[stack.index].length; i++){  // check if in all possible moves (nodelist)
+    stack.nodelist[stack.index] = gen(stack.tableau);         // gen all possible moves minus autoplay
+  for (i = 0; i < stack.nodelist[stack.index].length; i++){   // check if in all possible moves (nodelist)
     node = stack.nodelist[stack.index][i][0];
     src  = new Card(source(node)).toString();
     if (hilite.match(src))         // src="3D",node=[5, 9, 1, 0, "cf"]; src = "6S",node=[5, 6, 6, 6, "cc"]
       addhilight(node,'hilite-yellow');
   }
-  if (go.isSolved){ 
+  if (go.isSolved){                       // if isSolved is set, then show autoplay cards as well
     src = stack.list[stack.index].filter(function (node){  
       return node[4].match(/^(?!a)/);}).map(function(node){
         return new Card(source(node));
       }).join(",");
-//  if (hilite === src){   
+
     if (hilite.match(src)){              // check if hilite is same as solved (list)
       node = stack.list[stack.index][0];
       addhilight(node,'hilite-orange');  // NOTE: already has hilite-yellow !
@@ -296,11 +297,10 @@ function dstselectFree(element) {
         dst_col = (dstparent.offset().left - 10) / 110,
         node = [];
     node.push([src_col, src_row+1, dst_col, 0, 'cf']);
-    stack.add(autoplay(node));
+    stack.add(autoplay(node));  // append autoplay moves to node before adding to stack
     element.removeClass('hilite-blue').last().addClass('hilite-blue');
     redo();
-  }
-}
+} }
 
 function dstselectHome(element) {
   var src = new Card(element.last()),
@@ -314,14 +314,14 @@ function dstselectHome(element) {
     } else {
       node.push([src_col, src_row+1, src.suit+4, 0, 'ch']);
     }
-    stack.add(autoplay(node));
+    stack.add(autoplay(node));  // append autoplay moves to node before adding to stack
     element.removeClass('hilite-blue').last().addClass('hilite-blue');
     redo();
-  }
-}
+} }
 
 function dstselectCasc(element, $this) {
   var dstparent, dstofstop;
+  // WARNING! if you click fast enough, you can cause $this.hasClass('cascades') && $this.children().length>0 to true. should just exit!
   if ($this.hasClass('cascades')){ // target is an empty column
     dstparent  = $('.cascades:empty:first');
     dstofstop  = 0;
@@ -374,12 +374,12 @@ function dstselectCasc(element, $this) {
       for (i=0; i<element.length; i++){
         node.push([src_col, src_row+1+i, dst_col, dst_row+1+i, 'cc']);
     } }
-    stack.add(autoplay(node));
+    stack.add(autoplay(node));  // append autoplay moves to node before adding to stack
     redo();
 } }
 
 function addEvents() { 
-
+  $('.container').html( go.game.layout );
   var n = 0, i;  // store shuffled deck into the cascades
   $('.deck').each(function (index, element){
     var card = $(element);
@@ -589,37 +589,39 @@ function xhrrequest(msg, flag) {
     go.xhrconnect = false;
 } }
 
-function undo () {
-  var node = stack.get(), seq = [], first = true;
+function undo() {
+  var node = stack.get(), seq = []; go.first = true;
   node = node.map(function (a){return [a[2], a[3], a[0], a[1], a[4]];});
   while( node[node.length-1][4].match(/^a/) ) 
-    seq.push(playAll({entry: [node.pop()], 
-      auto: true, frwd: false, done: false, first: first})); 
-  seq.push(playAll({entry: node, auto: false, frwd: false, done: true, first: first}));
+    seq.push(buildSeq({entry: [node.pop()], 
+      auto: true, frwd: false, done: false, first: go.first})); 
+  seq.push(buildSeq({entry: node, 
+    auto: false, frwd: false, done: true, first: go.first}));
   //console.log(message('\n'));
-  go.isBusy = true;
+  go.isBusy = true; /*1*/
   $.Velocity.RunSequence(seq);
 }
 
-function redo () {
-  var node = stack.get(), seq = [], heap = [], first = true;
+function redo() {
+  var node = stack.get(), seq = [], heap = []; go.first = true;
   while( node.length && node[0][4].match(/^(?!a)/) ) 
     heap.push(node.shift());
-  seq.push(playAll({entry: heap, 
-    auto: false, frwd: true, done: node.length ? false : true, first: first}));
+  seq.push(buildSeq({entry: heap, 
+    auto: false, frwd: true, done: node.length ? false : true, first: go.first}));
   while(node.length>0)
-    seq.push(playAll({entry: [node.shift()], 
-      auto: true, frwd: true, done: node.length ? false : true, first: first})); 
+    seq.push(buildSeq({entry: [node.shift()], 
+      auto: true, frwd: true, done: node.length ? false : true, first: go.first})); 
   //console.log(message('\n'));
-  go.isBusy = true;
+  go.isBusy = true; /*3*/
   $.Velocity.RunSequence(seq);
 }
 
-function beginFactory(ids) {
+// move bus into position then everyone on the bus !
+function beginFactory(ids) { /*4*/
   function begin(){
     var src = $(ids);
     $('.bus').toggle().css({top: src.offset().top, left: src.offset().left});
-    var ytop = 0;
+    var ytop = 0; // ytop is relative to .bus anchor
     $('.bus').append(src).children()
       .each( function (){ 
         $( this ).css({top: ytop});
@@ -629,13 +631,14 @@ function beginFactory(ids) {
   return begin;
 }
 
-function completeFactory(dstparent, ytop, done, first, hilite) {
+// once in final position then everyone off the bus !
+function completeFactory(dst, ytop, done, first, hilite) { /*5*/
   function complete(){
     if (first) $('.img').removeClass('hilite-yellow hilite-orange hilite-next');
     $('.bus').children().removeClass(hilite);
-    dstparent.append( $('.bus').toggle().children()
+    dst.append( $('.bus').toggle().children()
       .each( function (){
-        $(this).css({top: ytop, left: 0}); // this==dst
+        $(this).css({top: ytop, left: 0}); // this==dst, ytop is relative to dst anchor (.freecell, .homecell, .cascades)
         ytop+=go.deltaHeight;
       })
     );
@@ -645,18 +648,25 @@ function completeFactory(dstparent, ytop, done, first, hilite) {
   return complete;
 }
 
-function playAll(q) {
-  var p = Play(q.entry),  // autoplay is twice as fast as redo & undo is twice as that !
-    speed = function (p, q){ 
-      return p.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.slow * 0.2;
+// Note. there are two different top and left offsets 
+//       one relative to .container, the other relative to an anchor (.homecell, .freecell, .cascades and .bus!)
+//       .deck cards are always a child of some anchor
+
+function buildSeq(q) { /*6*/
+  var k = calc(q.entry),  
+    speed = function (k, q){ // autoplay is twice as fast as redo & undo is twice as that !
+      return k.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.slow * 0.2;
     },
-    result = {
-      e: $('.bus'),
-      p: {top: p.dst.offset().top + p.top * go.deltaHeight, left: p.dst.offset().left},      
-      o: {duration: speed(p, q),
-        begin: beginFactory( p.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
-        complete: completeFactory(p.dst, p.top * go.deltaHeight, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
-    } };
+    result = {       // result is the runSequence object
+      e: $('.bus'),                                             // animate the .bus element (highest z-order!)
+      p: { top: k.dst.offset().top + k.idx * go.deltaHeight,   // final position relative to the .container
+           left: k.dst.offset().left 
+      },      
+      o: { duration: speed(k, q),                               // the animate before and after functions uses closures!
+           begin: beginFactory( k.src.map(function (id){return "#" + id;}).join(", ") ), // .deck #id's
+           complete: completeFactory(k.dst, k.idx * go.deltaHeight, q.done, q.first, q.auto ? "hilite-auto": "hilite-blue") 
+      }
+    }; /*7*/
 
   q.entry.forEach(function (move) {
     stack.tableauPlay(move);
@@ -664,27 +674,27 @@ function playAll(q) {
 
   if (q.frwd){
     if (q.auto){
-      $("#" + p.src).addClass('hilite-auto');
+      $("#" + k.src).addClass('hilite-auto');
     } else {
-      $( p.src.map(function (id){return "#" + id;}).join(", ") ).addClass('hilite-blue');
-      p.dst.children().length ?
-        p.dst.children().last().addClass('hilite-orange') :
-        p.dst.addClass('hilite-orange');
+      $( k.src.map(function (id){return "#" + id;}).join(", ") ).addClass('hilite-blue');
+      k.dst.children().length ?
+        k.dst.children().last().addClass('hilite-orange') :
+        k.dst.addClass('hilite-orange');
     }
     if (stack.isKings()) go.setSolved(true);
   }
-  q.first = false;
+  go.first = false;
   return result;
 }
 
-function Play(entry) {
+function calc(entry) {
   var element = entry.map(function (move){
       return stack.tableau[move[0]][move[1]].toString();
     }),
     src_col = entry[0][0], src_row = entry[0][1], 
     dst_col = entry[0][2], dst_row = entry[0][3],
     dy = (src_row ? -280 - (src_row-1) * go.deltaHeight : -120),
-    dstparent, dx;
+    dstparent, dx, delta;
 
   if (dst_row === 0){
     if (dst_col<4){
@@ -699,9 +709,10 @@ function Play(entry) {
     dstparent = $('.cascades').eq(dst_col);
   }
   dx = dstparent.offset().left - (10 + src_col * 110); // element.offset().left;
-  return {src: element, dst: dstparent, top: dst_row,
-          delta: Math.floor(Math.sqrt(dx * dx + dy * dy))
-}; }
+  delta = Math.floor(Math.sqrt(dx * dx + dy * dy)); /*8*/
+
+  return { src: element, dst: dstparent, idx: dst_row, delta: delta }; 
+}
 
 function autoplay(list) {
   var tableau = $.extend(true, [], stack.tableau),
@@ -792,7 +803,7 @@ function gen(tableau) {
         if(!(z[c] == k || nodeSequence(tableau, [c, k+1, c, k+1]))) // ce
           break;
 
-        if(ecount*(fcount+1)>z[c]-k){
+        if(ecount*(fcount+1)>z[c]-k){                               // e*(f+1)
           for(node=[],x=k,y=1;x<=z[c];)
             node.push([c,x++,eindex,y++,"ce"]);
           nodelist.push(node);
@@ -803,7 +814,7 @@ function gen(tableau) {
       for (k=z[c]; k>0; k--){
         if(!(z[c] == k || nodeSequence(tableau, [c, k+1, c, k+1]))) // cc
           break;
-        if ((ecount+1)*(fcount+1)>z[c]-k && 
+        if ((ecount+1)*(fcount+1)>z[c]-k &&                         // (e+1)*(f+1)
             nodeSequence(tableau, [c, k, j, z[j]+1]) ){
           for (node=[],x=k,y=z[j]+1;x<=z[c];)
             node.push([c,x++,j,y++,'cc']);
@@ -820,6 +831,27 @@ var stack = {
   index: 0,         // init @ setup
   hist: [],         // init @ setup
   tableau: [],      // init @ setup       -- setupLayout -> initTableau = new Card
+
+// Uncaught DataCloneError: Failed to execute 'postMessage' 
+//   if stack.tableau.init and stack.tableau.play
+// the DataCloneError is from trying to pass an object with methods to postMessage
+// go.solver.postMessage(JSON.parse(JSON.stringify(stack.tableau))); works!
+
+  tableauInit: function (){
+    for (var i = 0; i < 8; i++){
+      this.tableau[i] = [];
+      this.tableau[i][0] = new Card(); 
+      var src = $('.cascades').eq(i).children();
+      for (var j = 0; j < 19; j++){
+        this.tableau[i][j + 1] = new Card(j < src.length ? src.eq(j) : undefined);
+  } } },
+  tableauPlay: function(move) {
+    var src = this.tableau[move[0]][move[1]];
+    this.tableau[move[2]][move[3]] = src;
+    move[1] === 0 && move[0] >= 4 && src.rank > 1 ? 
+      this.tableau[move[0]][move[1]] = new Card(src.rank - 1, src.suit) : 
+      this.tableau[move[0]][move[1]] = new Card();
+  },
   trimLists: function (){
     while (this.list.length > this.index) this.list.pop();
     while (this.nodelist.length > this.index + 1) this.nodelist.pop();
@@ -852,11 +884,11 @@ var stack = {
     this.hist.push("inc: "+ this.move()); 
     this.index++; 
   },
-  move: function () {
+  move: function (){
     return nodeString(this.tableau, this.list[this.index][0]);
   }
 }, go = { 
-  isBusy: false, NORMAL: 4, slow: this.NORMAL, xhrconnect: true, solver: null, webworker: true, audit: "", nexus: 0,
+  isBusy: false, NORMAL: 4, slow: this.NORMAL, xhrconnect: true, solver: null, webworker: true, audit: "", nexus: 0, first: false,
   isMobile: !!("ontouchstart" in window), 
   deltaHeight: this.isMobile ? 69 : 50,
   template: '<div class="{0}" style="background-position: {1}% {2}%; top: {3}px; left: {4}px; "></div>',
@@ -882,27 +914,5 @@ var stack = {
       $('.icon').eq(5).css("background-position", "25% 75%");
     }
   }, game: null
-};
-
-// Uncaught DataCloneError: Failed to execute 'postMessage' 
-//   if stack.tableau.init and stack.tableau.play
-// the DataCloneError is from trying to pass an object with methods to postMessage
-// go.solver.postMessage(JSON.parse(JSON.stringify(stack.tableau))); works!
-
-stack.tableauInit = function (){
-  for (var i = 0; i < 8; i++){
-    stack.tableau[i] = [];
-    stack.tableau[i][0] = new Card(); 
-    var src = $('.cascades').eq(i).children();
-    for (var j = 0; j < 19; j++){
-      stack.tableau[i][j + 1] = new Card(j < src.length ? src.eq(j) : undefined);
-} } };
-
-stack.tableauPlay = function(move) {
-  var src = stack.tableau[move[0]][move[1]];
-  stack.tableau[move[2]][move[3]] = src;
-  move[1] === 0 && move[0] >= 4 && src.rank > 1 ? 
-    stack.tableau[move[0]][move[1]] = new Card(src.rank - 1, src.suit) : 
-    stack.tableau[move[0]][move[1]] = new Card();
 };
 

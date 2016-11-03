@@ -2,6 +2,7 @@
 .project
 .settings
 *.class
+*.odt
 /fc$log.txt
 /upload*.txt
 desktop.ini
