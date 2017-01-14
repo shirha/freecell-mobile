@@ -240,7 +240,7 @@ var SRCCOL = 0, SRCROW = 1, DSTCOL = 2, DSTROW = 3;
 function play (tableau, move) {
   tableau[move[DSTCOL]][move[DSTROW]] = tableau[move[SRCCOL]][move[SRCROW]];
   tableau[move[SRCCOL]][move[SRCROW]] = 0;
-};
+}
 
 function undo (tableau, node){
   for (var i = node.length - 1; i >= 0; i--){
