@@ -403,7 +403,7 @@ var util = require('./module-util'),
     rank = util.rank,
     suit = util.suit;
 */
-function autoplay (tableau, node){   // WARNING: updates tableau & node!
+function autoplay (tableau, node){   // WARNING: mutates tableau & node!
 
 // var tableau = $.extend(true, [], tableax);
   node.forEach(function (move) {
