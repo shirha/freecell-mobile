@@ -1,0 +1,27 @@
+{
+  "name": "freecell2",
+  "version": "2.0.0",
+  "description": "freecell for node",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shirha/freecell2.git"
+  },
+  "author": "shirha",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shirha/freecell2/issues"
+  },
+  "homepage": "https://github.com/shirha/freecell2#readme",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "colors": "^1.1.2",
+    "express": "^4.14.1"
+  },
+  "devDependencies": {
+    "browserify": "^14.0.0"
+  }
+}

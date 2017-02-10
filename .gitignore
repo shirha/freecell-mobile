@@ -6,4 +6,4 @@
 /fc$log.txt
 /upload*.txt
 desktop.ini
-target/freecell-mobile-0.1-SNAPSHOT.jar
+# target/freecell-mobile-0.1-SNAPSHOT.jar

@@ -1,0 +1,121 @@
+"use strict";
+$(document).ready(function () {
+  initsolvers();
+  initheight();
+  go.game = layout();
+  setupLayout();
+});
+
+function initsolvers() {
+    go.solver = new Worker('js/solver.js');
+    go.solver.addEventListener('message', function (e) {
+
+  xhrrequest("~", false); // ping the server
+}
+function initheight() {
+
+function setupLayout() {
+  addEvents(); // game, list & nodelist init'd at page load & new game
+  stack.index = 0, stack.hist = [], stack.tableauInit(), go.speed = go.NORMAL;
+  go.setSolved(); // need to reset solve button
+  gray();
+  hint();
+}
+function gray() {
+function hint() {
+
+function message(sep) {
+function xhrrequest(msg, flag) {
+  $.ajax({ url: "/dynamic/solve/" + msg 
+    }).done(function (resp) {
+    }).fail(function () {
+  })
+}
+
+function shuffle(demo) {
+var layout = (function () {
+  function createDivs(cls, n, ofsLeft, ofsTop, imgWidth, imgHeight, ft, fl, bpx, bpy) 
+
+  function inSequence(bot_card, top_card) {
+function addEvents() {
+  $('.container').html(go.game.layout);
+
+  $('.deck, .freecell, .homecell, .cascades').on('click', function () {
+
+	// "make a selection"
+	// was hilite-blue cards selected then toggle off
+	// if there are no hilite-blue cards then toggle on
+	// else "choose a destination"
+
+  $('.icon').on('click', function () {
+    switch ($this.index()) {
+      case 0: new game
+      case 1: reset
+      case 2: undo
+      case 3: redo
+      case 4: info
+      case 5: speed
+      case 6: solve
+      case 7: help
+  });
+}
+function closehelp() {
+//
+  function removehilight(extra) {
+  function addhilight(node, color) {
+  function source(node) {
+
+// when a selection is made, hilite-yellow all available moves 
+// if solved is also true and you choose the same selection,
+// hilite-orange destination card and hilite-autoplay also
+
+var checkAvailable = function () {
+// gen all possible moves minus autoplay
+  if (stack.nodelist[stack.index] === undefined) stack.nodelist[stack.index] = gen(stack.tableau); 
+
+
+// "destination selection ..."
+function dstselectFree(element) {
+function dstselectHome(element) {
+function dstselectCasc(element, $this) {
+
+function undo() {
+function redo() {
+
+// move bus into position then everyone on the bus !
+function beginFactory(ids) {
+  function begin() {
+
+// once in final position then everyone off the bus !
+function completeFactory(dst, ytop, done, first, hilite) {
+  function complete() {
+
+  function calc(entry) {
+function buildSeq(q) {
+      result = {  // result is the runSequence object
+
+  function adjacentHomecells(tableau, src) {
+  function play(tableau, move) {
+function autoplay (list) {
+
+  function nodeSequence(tableau, node) {
+function gen (tableau) {
+
+var stack = {
+  list: [],     // init @ page load && new game  -- used by redo, undo & solve
+  nodelist: [], // init @ page load && new game  -- used to hilite, filled in by gen
+  index: 0,     // init @ setup
+  hist: [],     // init @ setup
+  tableau: [],  // init @ setup       -- setupLayout -> initTableau = new Card
+
+// global object
+go = {
+  solver: null, webworker: true, xhrconnect: true,
+  isMobile: !!("ontouchstart" in window),
+  isBusy: false, isSolved: false, game: layout(),
+
+  setSolved: function setSolved(flag) {
+  setSpeed: function setSpeed() {
+
+function Card(src) {
+Card.prototype = {
