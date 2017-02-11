@@ -7,3 +7,4 @@
 /upload*.txt
 desktop.ini
 # target/freecell-mobile-0.1-SNAPSHOT.jar
+/node_modules
