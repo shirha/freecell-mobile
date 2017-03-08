@@ -1,7 +1,7 @@
 "use strict";
 $(document).ready(function () {
   initservers();
-  initheight();
+  initialize();
   stack.init();
   setupLayout();
 });
@@ -145,8 +145,8 @@ var layout = (function () {
     ]
     .reduce(function (divs, clas) {
         return divs += createDivs.apply(this, clas);
-      }, 
-      "") + '<div class="bus"  style="display: none"></div>';
+      },                            // preload spysheet.png
+      "") + '<div class="bus"></div><div class="busy"></div>'; 
     // create bus last for z-index ! -- velocity.js anchor
     return card;
   };
@@ -182,14 +182,14 @@ function initservers() {
       go.audit = e.data.audit;
       go.isBusy = false;
       hint();
-      clearInterval(window._spy);
+      clearInterval(window._busy);
     }, false);
   } catch (e) {
     console.log(e);
     go.isBusy = false;
     go.webworker = false;
     testservers();
-    clearInterval(window._spy);
+    clearInterval(window._busy);
   }
 }
 //
@@ -221,13 +221,13 @@ function noderequest(message) {
       go.audit = resp.audit;
       go.isBusy = false;
       hint();
-      clearInterval(window._spy);
+      clearInterval(window._busy);
     })
     .fail(function () {
       go.isBusy = false;
       go.nodeserver = false;
       testservers();
-      clearInterval(window._spy);
+      clearInterval(window._busy);
     });
 }
 
@@ -252,13 +252,13 @@ function javarequest(message) {
       go.audit = '';
       go.isBusy = false;
       hint();
-      clearInterval(window._spy);
+      clearInterval(window._busy);
     })
     .fail(function () {
       go.isBusy = false;
       go.javaserver = false;
       testservers();
-      clearInterval(window._spy);
+      clearInterval(window._busy);
     });
 }
 //
@@ -287,9 +287,10 @@ function addEvents() {
     if (go.isBusy) return false;
     var $this = $(this);
 
-    // was a hilite-blue cascade column clicked? toggle off
-    if ($this.hasClass(go.hilite.blue) || $this.parent().children().hasClass(go.hilite.blue)) {
-      removehilight(go.hilite.blue); // hilite-purple');
+    // was a hilite-blue freecell or cascade column clicked? toggle off
+    if ($this.hasClass(go.hilite.blue) || 
+      $this.parent().children().hasClass(go.hilite.blue)) {
+        removehilight(go.hilite.blue); 
 
       // "make a selection"
       // no hilite-blue cards? then hilite-blue excl. home 
@@ -313,12 +314,14 @@ function addEvents() {
       var element = $('.' + go.hilite.blue);
 
       // "choose a destination"
-      if ($this.hasClass('freecell') || $this.parent().hasClass('freecell')) {
-        dstselectFree(element);
-      } else if ($this.hasClass('homecell') || $this.parent().hasClass('homecell')) {
-        dstselectHome(element);
+      if ($this.hasClass('freecell') || 
+        $this.parent().hasClass('freecell')) {
+          dstselectFree(element);
+      } else if ($this.hasClass('homecell') || 
+        $this.parent().hasClass('homecell')) {
+          dstselectHome(element);
       } else {
-        dstselectCasc(element, $this);
+          dstselectCasc(element, $this);
       }
     }
     hint();
@@ -372,20 +375,20 @@ function addEvents() {
 
       // info - style="background-position: 20% 75%; top: 10px; left: 450px;"
       case 4:
-        $('#gameno').val(go.game.gameno);    // gameno:90082, d:48, p:141k, e:12s
-//        $('#value').html( $('meta[name=viewport]').attr('content').match(/initial-scale=([\d.]+)/)[1]
-//          .slice(0,5) + ", " + (.5 + $('#scale').val() / 200).toFixed(3) );
-        $('#elapsed').html('<table>' + go.options.screen + '<tr><td colspan=4>' + go.audit + '</table>');
-        $(".options").show();
-  
-//      $('#gameno').focus().select(); // this auto opens keyboard on nexus ;(
-        var focusedElement;
-        $(document).on('focus', '#gameno', function () {
-          if (focusedElement == this) return;
-          focusedElement = this;
-          setTimeout(function () { focusedElement.select(); }, 50);
-        });
+        $('#gameno').val(go.game.gameno);
+        $('#elapsed').html('<table>' + go.options.screen + 
+          '<tr><td colspan=4>' + go.audit + '</table>');
+        $(".options").fadeIn('fast'); //'slow', function () {
+      //$(".options").fadeIn.show();
 
+          var focusedElement;
+          $(document).on('focus', '#gameno', function () {
+            if (focusedElement == this) return;
+            focusedElement = this;
+            setTimeout(function () { focusedElement.select(); }, 50);
+          });
+
+//      });
         break;
       //
       // speed - style="background-position: 25% 75%;   top: 10px; left: 560px; " - normal
@@ -447,15 +450,16 @@ function addEvents() {
 function startinterval ($this) {
   $this.css({"background-image": "url('i/spysheet.png')", 
     "background-position": "0% 0%" });
-  window._spy = setInterval(function () { 
+  window._busy = setInterval(function () { 
     var offset = (parseInt($this.css("background-position").match(/\d+/)[0]) + 4) % 96;
     $this.css("background-position", offset + '% 0%');
   }, 1000);
 }
 
-function initheight() {
+function initialize() {
   if (screen.width < 895.5) {
-    $('meta[name=viewport]').attr('content', 'width=device-width, initial-scale=' + screen.width / 895.5);
+    $('meta[name=viewport]')
+      .attr('content', 'width=device-width, initial-scale=' + screen.width / 895.5);
   }
 
   if (!!navigator.userAgent.match(/Android.*AppleWebKit/i)) {
@@ -479,8 +483,9 @@ function initheight() {
       setupLayout();
       go.audit = "";
     }
-    $('.options').hide();
-    hint();
+    $('.options').fadeOut('fast'); //'slow', function () { // .hide();
+      hint();
+  //});
   };
   $(".options button").on('click', closeoptions);
 
@@ -500,7 +505,7 @@ function initheight() {
     .match(/initial-scale=([\d.]+)/)[1] - .5) );
   $('#value').html( (.5 + $('#scale').val() / 200).toFixed(3) );
 
-  $('#blur').change(function () {
+  $('#blur').change(function () { // allow change if gray only
     if (stack.isEob() && $('.' + go.hilite.blue).length === 0) {
       $('.' + go.hilite.next).removeClass(go.hilite.next);
       go.options.blur = !go.options.blur;
@@ -609,6 +614,12 @@ function dstselectHome(element) {
   }
 }
 //
+Array.prototype.uniq = function() {
+  var n = Object.create(null);
+  for(var i = 0; i < this.length; i++) n[this[i]] = true; 
+  return Object.keys(n);
+}
+
 function dstselectCasc(element, $this) {
   var dstparent, dstofstop;
   // WARNING! if you click fast enough, you can cause $this.hasClass('cascades') && 
@@ -622,29 +633,40 @@ function dstselectCasc(element, $this) {
     dstofstop = dstparent.children().last().position().top + go.deltaHeight;
   }
   var src_col = (element.parent().offset().left - 10) / 110, 
-      src_row =  element.parent().children().length - (element.parent().hasClass('freecell') ? 1 : 0),
+      src_row =  element.parent().children().length -(element.parent().hasClass('freecell')?1:0),
       dst_col = (dstparent.offset().left - 10) / 110,
       dst_row =  dstparent.children().length,
-      src = asString(stack.tableau[src_col][src_row]),
-      nodestr = stack.nodelist[stack.index].filter(function (list) {
-         return list[0][2] == this && 
-                list[0][3] !== 0 && 
-                list.some(function (node) {
-                  return asString(stack.tableau[node[0]][node[1]]) == this;
-                }, src);
-      }, dst_col)
-      .map(function (list) {
-        return list.map(function (node) {
+      src     = asString(stack.tableau[src_col][src_row]),
+
+      nodearr = stack.nodelist[stack.index].filter(function (list) {
+        return list[0][2] === this &&         // dst_col
+               list[0][3] !== 0    &&         // dst_row not free or home
+               list.some(function (node) {    // node contains src (some)
+                 return asString(stack.tableau[node[0]][node[1]]) == this;
+               }, src);
+      }, dst_col),
+
+      nodestr = nodearr.reduce(function (acc,list) { // flatten nodearr
+        return acc.concat(list);
+      }, [])
+      .map(function (node) {
           return asString(stack.tableau[node[0]][node[1]]);
-        }).join(",");
-      }).join(",");
+      })
+      .uniq().join(",");
+/*
+"[[[4,8,2,1,"ce"]],[[4,7,2,1,"ce"],[4,8,2,2,"ce"]],[[4,6,2,1,"ce"],[4,7,2,2,"ce"],[4,8,2,3,"ce"]],[[4,5,2,1,"ce"],[4,6,2,2,"ce"],[4,7,2,3,"ce"],[4,8,2,4,"ce"]]]"
+"[[4,8,2,1,"ce"],[4,7,2,1,"ce"],[4,8,2,2,"ce"],[4,6,2,1,"ce"],[4,7,2,2,"ce"],[4,8,2,3,"ce"],[4,5,2,1,"ce"],[4,6,2,2,"ce"],[4,7,2,3,"ce"],[4,8,2,4,"ce"]]"
+["9H", "TS", "9H", "JD", "TS", "9H", "QS", "JD", "TS", "9H"]
+"9H,TS,JD,QS"
+*/
 
   if (!!nodestr && ( // NOTE: could also have hilite-orange FIX: #44098
-  dstparent.hasClass(go.hilite.yellow) || dstparent.children().hasClass(go.hilite.yellow))) {
-    element.each(function () {
-      var card = new Card($(this)).toString();
-      if (!nodestr.match(card)) $(this).removeClass(go.hilite.blue).addClass(go.hilite.purple);
-    });
+    dstparent.hasClass(go.hilite.yellow) || 
+    dstparent.children().hasClass(go.hilite.yellow))) {
+      element.each(function () {
+        var card = new Card($(this)).toString();
+        if (!nodestr.match(card)) $(this).removeClass(go.hilite.blue).addClass(go.hilite.purple);
+      });
 
     element = $('.' + go.hilite.blue);
     setTimeout(function () {
@@ -753,18 +775,17 @@ function completeFactory(deltaHeight, notBusy, dst, ytop, done, first, hilite, s
 
 function buildSeq(q) {
 
-  var k = calc(q.entry),
+  var k = calc(q.entry),          // autoplay is twice as fast as frwd & bkwd is twice as that !
       duration = function duration(k, q) {
-      // autoplay is twice as fast as frwd & bkwd is twice as that !
-      return k.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.speed * 0.2;
-  },
-      result = {  // result is the runSequence object
-    e: $('.bus'), // animate the .bus element (highest z-order!)
-    p: { top: k.dst.offset().top + k.idx * go.deltaHeight, // final position relative to the .container
-      left: k.dst.offset().left
+        return k.delta * (q.auto ? 0.5 : 1) * (q.frwd ? 1 : 0.5) * go.speed * 0.2;
+      },
+      result = {                  // result is the runSequence object
+    e: $('.bus'),                 // animate the .bus element (highest z-order!)
+    p: { top: k.dst.offset().top + k.idx * go.deltaHeight, 
+      left: k.dst.offset().left   // final position relative to the .container
     },
     o: { 
-      duration: duration(k, q), // the animate before and after functions uses closures!
+      duration: duration(k, q),   // the animate before and after functions uses closures!
       begin: beginFactory(go.deltaHeight, 
         k.src.map(function (id) {
           return "#" + id;
@@ -793,7 +814,9 @@ function buildSeq(q) {
       $(k.src.map(function (id) {
         return "#" + id;
       }).join(", ")).addClass(go.hilite.blue);
-      k.dst.children().length ? k.dst.children().last().addClass(go.hilite.orange) : k.dst.addClass(go.hilite.orange);
+      k.dst.children().length ? 
+        k.dst.children().last().addClass(go.hilite.orange) : 
+        k.dst.addClass(go.hilite.orange);
     }
     if (isKings(stack.tableau)) go.setSolved(true);
   }
@@ -941,11 +964,6 @@ function nodeSequence (tableau, node){
       dst = tableau[node[2]][node[3] - 1];
   return inSequence(src, dst);
 }
-//
-function play(tableau, move) {
-  tableau[move[DSTCOL]][move[DSTROW]] = tableau[move[SRCCOL]][move[SRCROW]];
-  tableau[move[SRCCOL]][move[SRCROW]] = 0;
-}
 
 function undo(tableau, node) {
   for (var i = node.length - 1; i >= 0; i--) {
@@ -959,6 +977,11 @@ function undo(tableau, node) {
     } else {
       tableau[move[DSTCOL]][move[DSTROW]] = 0;
 } } }
+//
+function play(tableau, move) {
+  tableau[move[DSTCOL]][move[DSTROW]] = tableau[move[SRCCOL]][move[SRCROW]];
+  tableau[move[SRCCOL]][move[SRCROW]] = 0;
+}
 
 function Card(src) {  // Class
   if (arguments.length == 2) {
@@ -989,6 +1012,14 @@ var zeroArray = (len) => Array.apply(null, Array(len)).map(Number.prototype.valu
   suit = (s) => s >> 4 &  3,
   SRCCOL = 0, SRCROW = 1, DSTCOL = 2, DSTROW = 3, 
   HOMEOFFSET = 4, MAXFREE = 4, MAXCOLS = 8, MAXROWS = 20, KING = 13;
+
+var fromId = (function() {
+  var hash = {
+    'D':0,'C':1,'H':2,'S':3,
+    'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13
+  };
+  return function(id){ return hash[id[0]] + hash[id[1]] * 16 + 64 };
+})();
 
 function fromString (input) {
   var a = input.split('\n')
@@ -1035,25 +1066,24 @@ var stack = {
     go.audit = "";
   },
   rset: function() {
-    this.index = 0, 
-    this.hist = [], 
-    this.tableauInit(), 
-    go.speed = go.NORMAL, 
+    this.index = 0;
+    this.hist = []; 
+    this.tableauInit(); 
+    go.speed = go.NORMAL; 
     go.setSolved(); // need to reset solve button
   },
-  tableauInit: function tableauInit() {
-    for (var i = 0; i < 8; i++) {
-      this.tableau[i] = [];
-      this.tableau[i][0] = 0;
-      var casc = $('.cascades').eq(i).children();
-      for (var j = 0; j < 19; j++) {
-        this.tableau[i][j + 1] = 0;
-        if (j < casc.length) {
-          var pos = casc.eq(j).css('backgroundPosition').match(/\d+/g);
-          this.tableau[i][j + 1] = (pos[0] / 5 + 1) + (pos[1] / 20) * 16 + 64;
-        }
-  } } },
-  tableauPlay: function tableauPlay(move) {
+  tableauInit: function () {
+      for (var i = 0; i < 8; i++) {
+        this.tableau[i] = [];
+        this.tableau[i][0] = 0;
+        var casc = $('.cascades').eq(i).children();
+        for (var j = 0; j < 19; j++) {
+          if (j < casc.length) {
+            this.tableau[i][j + 1] = fromId( casc.eq(j).attr('id') ); // 8x faster
+          } else {
+            this.tableau[i][j + 1] = 0;
+  } } } },
+  tableauPlay: function (move) {
     var src = this.tableau[move[0]][move[1]];
     this.tableau[move[2]][move[3]] = src;
     move[1] === 0 && move[0] >= 4 && rank(src) > 1 ? 
@@ -1101,9 +1131,11 @@ var stack = {
 //
   move: function move() {
     var node = this.list[this.index][0],
-    src = asString(this.tableau[node[0]][node[1]]),
-        dst = node[3] > 1 ? asString(this.tableau[node[2]][node[3] - 1]) : 
-          node[3] == 1 ? 'e' : node[2] < 4 ? 'f' : 'h';
+        src  = asString(this.tableau[node[0]][node[1]]),
+        dst  = node[3] > 1 ? 
+               asString(this.tableau[node[2]][node[3] - 1]) : 
+               node[3] == 1 ? 
+               'e' :  node[2] < 4 ?  'f' : 'h';
     return src + " " + dst;
 } },
 
@@ -1122,13 +1154,13 @@ go = { dump: function () {return JSON.stringify($.extend(go, stack)) },
   
   setSolved: function setSolved(flag) {
     (this.isSolved = arguments.length > 0 ? flag : this.isSolved) ? 
-      $('.icon').eq(6).css({
-        "background-image": "url('i/sheet.png')", "background-position": "30% 100%"}) : // solved
+      $('.icon').eq(6).css({                                              // solved
+        "background-image": "url('i/sheet.png')", "background-position": "30% 100%"}) : 
     !(this.javaserver || this.webworker) ? 
-      $('.icon').eq(6).css({
-        "background-image": "url('i/sheet.png')", "background-position": "30% 87.5%"}) : // disabled
-      $('.icon').eq(6).css({
-        "background-image": "url('i/sheet.png')", "background-position": "30% 75%"}); // enabled
+      $('.icon').eq(6).css({                                              // disabled
+        "background-image": "url('i/sheet.png')", "background-position": "30% 87.5%"}) : 
+      $('.icon').eq(6).css({                                              // enabled
+        "background-image": "url('i/sheet.png')", "background-position": "30% 75%"}); 
   },
 
   setSpeed: function setSpeed() {
