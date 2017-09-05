@@ -447,23 +447,12 @@ function addEvents() {
   });
 }
 
-// function startinterval ($this) {
-//   $this.css({"background-image": "url('i/spysheet.png')", 
-//     "background-position": "0% 0%" });
-//   window._busy = setInterval(function () { 
-//     var offset = (parseInt($this.css("background-position").match(/\d+/)[0]) + 4) % 96;
-//     $this.css("background-position", offset + '% 0%');
-//   }, 1000);
-// }
-
 function startinterval ($this) {
   $this.css( "background-position", "75% 0%" );
   window._busy = setInterval(function () { 
     var offset = $this.css("background-position").match(/[\.\d]+/g);
     var frames = (6 * (parseFloat(offset[1]) / 12.5) + (parseFloat(offset[0]) / 5) - 14) % 24;
-    var str = ( 75 + 5 * (frames % 6)) + '% ' + (12.5 * Math.floor(frames / 6))  + '%';
-//    console.log(offset, frames, str); // 675471110
-    $this.css("background-position", str); 
+    $this.css("background-position", (75 + 5 * (frames % 6)) + '% ' + (12.5 * Math.floor(frames / 6)) + '%'); 
   }, 1000);
 }
 
