@@ -447,12 +447,23 @@ function addEvents() {
   });
 }
 
+// function startinterval ($this) {
+//   $this.css({"background-image": "url('i/spysheet.png')", 
+//     "background-position": "0% 0%" });
+//   window._busy = setInterval(function () { 
+//     var offset = (parseInt($this.css("background-position").match(/\d+/)[0]) + 4) % 96;
+//     $this.css("background-position", offset + '% 0%');
+//   }, 1000);
+// }
+
 function startinterval ($this) {
-  $this.css({"background-image": "url('i/spysheet.png')", 
-    "background-position": "0% 0%" });
+  $this.css( "background-position", "75% 0%" );
   window._busy = setInterval(function () { 
-    var offset = (parseInt($this.css("background-position").match(/\d+/)[0]) + 4) % 96;
-    $this.css("background-position", offset + '% 0%');
+    var offset = $this.css("background-position").match(/[\.\d]+/g);
+    var frames = (6 * (parseFloat(offset[1]) / 12.5) + (parseFloat(offset[0]) / 5) - 14) % 24;
+    var str = ( 75 + 5 * (frames % 6)) + '% ' + (12.5 * Math.floor(frames / 6))  + '%';
+//    console.log(offset, frames, str); // 675471110
+    $this.css("background-position", str); 
   }, 1000);
 }
 
@@ -1154,13 +1165,7 @@ go = { dump: function () {return JSON.stringify($.extend(go, stack)) },
   
   setSolved: function setSolved(flag) {
     (this.isSolved = arguments.length > 0 ? flag : this.isSolved) ? 
-      $('.icon').eq(6).css({                                              // solved
-        "background-image": "url('i/sheet.png')", "background-position": "30% 100%"}) : 
     !(this.javaserver || this.webworker) ? 
-      $('.icon').eq(6).css({                                              // disabled
-        "background-image": "url('i/sheet.png')", "background-position": "30% 87.5%"}) : 
-      $('.icon').eq(6).css({                                              // enabled
-        "background-image": "url('i/sheet.png')", "background-position": "30% 75%"}); 
   },
 
   setSpeed: function setSpeed() {

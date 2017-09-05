@@ -82,15 +82,6 @@
   .icon, .freecell, .homecell, .cascades, .deck {
     background-image: url('i/sheet.png'); 
   }
-  .busy {
-    background-image: url('i/spysheet.png');
-    position: absolute;
-    height: 100px;
-    width: 100px;
-    top: 10px;
-    left: 670px;
-    float: left;
-  }
   .icon, .img, .bus {
     background-repeat: no-repeat;
     width: 100px;
@@ -102,7 +93,7 @@
                            transition:transform 0s;}
   .icon           {height: 100px;}
   .img, .bus      {height: 150px;}
-  .bus, .busy      {display: none;}
+  .bus            {display: none;}
 
   .mo-hilite-next    {border-radius: 8px; box-shadow: 0 0 0px 8px gray inset;}
   .mo-hilite-blue    {border-radius: 8px; box-shadow: 0 0 0px 8px cornflowerblue inset;}
@@ -143,8 +134,7 @@
     </table>
     <br><div id="elapsed"></div>
   </div>
-  <!--div class=spy></div>
-  <script src="js/jquery-1.12.4.min.js"></script>
+  <!--script src="js/jquery-1.12.4.min.js"></script>
   <script src="js/velocity.1.3.1.min.js"></script>
   <script src="js/velocity.5.1.1.ui.js"></script-->
   <script src="js/compress2.js"></script>
