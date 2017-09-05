@@ -1165,7 +1165,10 @@ go = { dump: function () {return JSON.stringify($.extend(go, stack)) },
   
   setSolved: function setSolved(flag) {
     (this.isSolved = arguments.length > 0 ? flag : this.isSolved) ? 
+      $('.icon').eq(6).css("background-position", "30% 100%") :  // solved
     !(this.javaserver || this.webworker) ? 
+      $('.icon').eq(6).css("background-position", "30% 87.5%") : // disabled
+      $('.icon').eq(6).css("background-position", "30% 75%");    // enabled
   },
 
   setSpeed: function setSpeed() {
