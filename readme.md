@@ -1,5 +1,7 @@
 # freecell-mobile
 
+NOTE: target\freecell-mobile-0.1-SNAPSHOT.jar removed, now see repository "freecell"
+
 The UI for freecell-solver !
 
 #### Installation and setup instructions
